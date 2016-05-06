@@ -77,6 +77,7 @@ APP = test
 #
 SRCS-$(CONFIG_RTE_LIBRTE_CMDLINE) := commands.c
 SRCS-y += test.c
+SRCS-y += test_soc.c
 SRCS-y += resource.c
 SRCS-y += test_resource.c
 test_resource.res: test_resource.c
