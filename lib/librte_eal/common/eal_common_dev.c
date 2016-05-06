@@ -106,17 +106,23 @@ rte_eal_dev_init(void)
 
 int rte_eal_dev_attach(const char *name, const char *devargs)
 {
-	struct rte_pci_addr addr;
+	struct rte_soc_addr soc_addr;
+	struct rte_pci_addr pci_addr;
 
 	if (name == NULL || devargs == NULL) {
 		RTE_LOG(ERR, EAL, "Invalid device or arguments provided\n");
 		return -EINVAL;
 	}
 
-	if (eal_parse_pci_DomBDF(name, &addr) == 0) {
-		if (rte_eal_pci_probe_one(&addr) < 0)
+	memset(&soc_addr, 0, sizeof(soc_addr));
+	if (rte_eal_parse_soc_spec(name, &soc_addr) == 0) {
+		if (rte_eal_soc_probe_one(&soc_addr) < 0) {
+			free(soc_addr.name);
 			goto err;
-
+		}
+	} else if (eal_parse_pci_DomBDF(name, &pci_addr) == 0) {
+		if (rte_eal_pci_probe_one(&pci_addr) < 0)
+			goto err;
 	} else {
 		if (rte_eal_vdev_init(name, devargs))
 			goto err;
@@ -131,15 +137,22 @@ err:
 
 int rte_eal_dev_detach(const char *name)
 {
-	struct rte_pci_addr addr;
+	struct rte_soc_addr soc_addr;
+	struct rte_pci_addr pci_addr;
 
 	if (name == NULL) {
 		RTE_LOG(ERR, EAL, "Invalid device provided.\n");
 		return -EINVAL;
 	}
 
-	if (eal_parse_pci_DomBDF(name, &addr) == 0) {
-		if (rte_eal_pci_detach(&addr) < 0)
+	memset(&soc_addr, 0, sizeof(soc_addr));
+	if (rte_eal_parse_soc_spec(name, &soc_addr) == 0) {
+		if (rte_eal_soc_detach(&soc_addr) < 0) {
+			free(soc_addr.name);
+			goto err;
+		}
+	} else if (eal_parse_pci_DomBDF(name, &pci_addr) == 0) {
+		if (rte_eal_pci_detach(&pci_addr) < 0)
 			goto err;
 	} else {
 		if (rte_eal_vdev_uninit(name))

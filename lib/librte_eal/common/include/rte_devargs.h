@@ -51,6 +51,7 @@ extern "C" {
 #include <stdio.h>
 #include <sys/queue.h>
 #include <rte_pci.h>
+#include <rte_soc.h>
 
 /**
  * Type of generic device
@@ -58,6 +59,8 @@ extern "C" {
 enum rte_devtype {
 	RTE_DEVTYPE_WHITELISTED_PCI,
 	RTE_DEVTYPE_BLACKLISTED_PCI,
+	RTE_DEVTYPE_WHITELISTED_SOC,
+	RTE_DEVTYPE_BLACKLISTED_SOC,
 	RTE_DEVTYPE_VIRTUAL,
 };
 
@@ -83,6 +86,11 @@ struct rte_devargs {
 			/** PCI location. */
 			struct rte_pci_addr addr;
 		} pci;
+		/** Used if type is RTE_DEVTYPE_*_SOC. */
+		struct {
+			/** SoC location. */
+			struct rte_soc_addr addr;
+		} soc;
 		/** Used if type is RTE_DEVTYPE_VIRTUAL. */
 		struct {
 			/** Driver name. */

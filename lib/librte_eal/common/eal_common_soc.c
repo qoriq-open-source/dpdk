@@ -37,6 +37,8 @@
 
 #include <rte_log.h>
 #include <rte_common.h>
+#include <rte_devargs.h>
+#include <rte_eal.h>
 #include <rte_soc.h>
 
 #include "eal_private.h"
@@ -46,6 +48,21 @@ struct soc_driver_list soc_driver_list =
 	TAILQ_HEAD_INITIALIZER(soc_driver_list);
 struct soc_device_list soc_device_list =
 	TAILQ_HEAD_INITIALIZER(soc_device_list);
+
+static struct rte_devargs *soc_devargs_lookup(struct rte_soc_device *dev)
+{
+	struct rte_devargs *devargs;
+
+	TAILQ_FOREACH(devargs, &devargs_list, next) {
+		if (devargs->type != RTE_DEVTYPE_BLACKLISTED_SOC &&
+			devargs->type != RTE_DEVTYPE_WHITELISTED_SOC)
+			continue;
+		if (!rte_eal_compare_soc_addr(&dev->addr, &devargs->soc.addr))
+			return devargs;
+	}
+
+	return NULL;
+}
 
 static int
 rte_eal_soc_probe_one_driver(struct rte_soc_driver *drv,
@@ -57,6 +74,18 @@ rte_eal_soc_probe_one_driver(struct rte_soc_driver *drv,
 	if (!ret) {
 		RTE_LOG(DEBUG, EAL,
 			" match function failed, skipping\n");
+		return ret;
+	}
+
+	RTE_LOG(DEBUG, EAL, "SoC device %s on NUMA socket %d\n",
+			dev->addr.name, dev->device.numa_node);
+	RTE_LOG(DEBUG, EAL, "  probe driver %s\n", drv->driver.name);
+
+	/* no initialization when blacklisted, return without error */
+	if (dev->device.devargs != NULL
+		&& dev->device.devargs->type == RTE_DEVTYPE_BLACKLISTED_SOC) {
+		RTE_LOG(DEBUG, EAL,
+			"  device is blacklisted, skipping\n");
 		return ret;
 	}
 
@@ -104,8 +133,8 @@ rte_eal_soc_detach_dev(struct rte_soc_driver *drv,
 		return ret;
 	}
 
-	RTE_LOG(DEBUG, EAL, "SoC device %s\n",
-		dev->addr.name);
+	RTE_LOG(DEBUG, EAL, "SoC device %s on NUMA socket %i\n",
+			dev->addr.name, dev->device.numa_node);
 
 	RTE_LOG(DEBUG, EAL, "  remove driver: %s\n", drv->driver.name);
 
@@ -218,13 +247,29 @@ int
 rte_eal_soc_probe(void)
 {
 	struct rte_soc_device *dev = NULL;
+	struct rte_devargs *devargs = NULL;
 	int ret = 0;
+	int probe_all = 0;
+
+	if (rte_eal_devargs_type_count(RTE_DEVTYPE_WHITELISTED_SOC) == 0)
+		probe_all = 1;
 
 	TAILQ_FOREACH(dev, &soc_device_list, next) {
-		ret = soc_probe_all_drivers(dev);
+
+		/* set devargs in SoC structure */
+		devargs = soc_devargs_lookup(dev);
+		if (devargs != NULL)
+			dev->device.devargs = devargs;
+
+		/* probe all or only whitelisted devices */
+		if (probe_all)
+			ret = soc_probe_all_drivers(dev);
+		else if (devargs != NULL &&
+			devargs->type == RTE_DEVTYPE_WHITELISTED_SOC)
+			ret = soc_probe_all_drivers(dev);
 		if (ret < 0)
-			rte_exit(EXIT_FAILURE, "Requested device %s"
-				 " cannot be used\n", dev->addr.name);
+			rte_exit(EXIT_FAILURE, "Requested device %s "
+				 "cannot be used\n", dev->addr.name);
 	}
 
 	return 0;

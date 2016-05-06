@@ -158,6 +158,30 @@ rte_eal_compare_soc_addr(const struct rte_soc_addr *a0,
 }
 
 /**
+ * Parse a specification of a soc device. The specification must differentiate
+ * a SoC device specification from the PCI bus and virtual devices. We assume
+ * a SoC specification starts with "soc:". The function allocates the name
+ * entry of the given addr.
+ *
+ * @return
+ *      -  0 on success
+ *      -  1 when not a SoC spec
+ *      - -1 on failure
+ */
+static inline int
+rte_eal_parse_soc_spec(const char *spec, struct rte_soc_addr *addr)
+{
+	if (strstr(spec, "soc:") == spec) {
+		addr->name = strdup(spec + 4);
+		if (addr->name == NULL)
+			return -1;
+		return 0;
+	}
+
+	return 1;
+}
+
+/**
  * Probe SoC devices for registered drivers.
  */
 int rte_eal_soc_probe(void);

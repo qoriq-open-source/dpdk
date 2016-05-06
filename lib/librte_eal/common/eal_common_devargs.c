@@ -41,6 +41,7 @@
 #include <string.h>
 
 #include <rte_pci.h>
+#include <rte_soc.h>
 #include <rte_devargs.h>
 #include "eal_private.h"
 
@@ -105,6 +106,14 @@ rte_eal_devargs_add(enum rte_devtype devtype, const char *devargs_str)
 			goto fail;
 
 		break;
+
+	case RTE_DEVTYPE_WHITELISTED_SOC:
+	case RTE_DEVTYPE_BLACKLISTED_SOC:
+		/* try to parse soc device with prefix "soc:" */
+		if (rte_eal_parse_soc_spec(buf, &devargs->soc.addr) != 0)
+			goto fail;
+		break;
+
 	case RTE_DEVTYPE_VIRTUAL:
 		/* save driver name */
 		ret = snprintf(devargs->virt.drv_name,
@@ -166,6 +175,14 @@ rte_eal_devargs_dump(FILE *f)
 			       devargs->pci.addr.devid,
 			       devargs->pci.addr.function,
 			       devargs->args);
+		else if (devargs->type == RTE_DEVTYPE_WHITELISTED_SOC)
+			fprintf(f, "  SoC whitelist %s %s\n",
+			       devargs->soc.addr.name,
+			       devargs->soc.addr.fdt_path);
+		else if (devargs->type == RTE_DEVTYPE_BLACKLISTED_SOC)
+			fprintf(f, "  SoC blacklist %s %s\n",
+			       devargs->soc.addr.name,
+			       devargs->soc.addr.fdt_path);
 		else if (devargs->type == RTE_DEVTYPE_VIRTUAL)
 			fprintf(f, "  VIRTUAL %s %s\n",
 			       devargs->virt.drv_name,
