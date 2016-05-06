@@ -3202,6 +3202,8 @@ rte_eth_copy_pci_info(struct rte_eth_dev *eth_dev, struct rte_pci_device *pci_de
 		return;
 	}
 
+	RTE_VERIFY(eth_dev->pci_dev != NULL);
+
 	eth_dev->data->dev_flags = 0;
 	if (pci_dev->driver->drv_flags & RTE_PCI_DRV_INTR_LSC)
 		eth_dev->data->dev_flags |= RTE_ETH_DEV_INTR_LSC;
