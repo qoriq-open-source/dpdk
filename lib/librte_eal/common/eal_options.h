@@ -69,6 +69,8 @@ enum {
 	OPT_NO_HUGE_NUM,
 #define OPT_NO_PCI            "no-pci"
 	OPT_NO_PCI_NUM,
+#define OPT_NO_SOC            "no-soc"
+	OPT_NO_SOC_NUM,
 #define OPT_NO_SHCONF         "no-shconf"
 	OPT_NO_SHCONF_NUM,
 #define OPT_SOCKET_MEM        "socket-mem"

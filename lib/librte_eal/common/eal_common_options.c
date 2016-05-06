@@ -85,6 +85,7 @@ eal_long_options[] = {
 	{OPT_NO_HPET,           0, NULL, OPT_NO_HPET_NUM          },
 	{OPT_NO_HUGE,           0, NULL, OPT_NO_HUGE_NUM          },
 	{OPT_NO_PCI,            0, NULL, OPT_NO_PCI_NUM           },
+	{OPT_NO_SOC,            0, NULL, OPT_NO_SOC_NUM           },
 	{OPT_NO_SHCONF,         0, NULL, OPT_NO_SHCONF_NUM        },
 	{OPT_PCI_BLACKLIST,     1, NULL, OPT_PCI_BLACKLIST_NUM    },
 	{OPT_PCI_WHITELIST,     1, NULL, OPT_PCI_WHITELIST_NUM    },
@@ -853,6 +854,10 @@ eal_parse_common_option(int opt, const char *optarg,
 
 	case OPT_NO_PCI_NUM:
 		conf->no_pci = 1;
+		break;
+
+	case OPT_NO_SOC_NUM:
+		conf->no_soc = 1;
 		break;
 
 	case OPT_NO_HPET_NUM:
