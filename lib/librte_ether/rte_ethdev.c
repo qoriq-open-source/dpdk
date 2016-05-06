@@ -2528,6 +2528,17 @@ _rte_eth_dev_callback_process(struct rte_eth_dev *dev,
 	rte_spinlock_unlock(&rte_eth_dev_cb_lock);
 }
 
+static inline
+struct rte_intr_handle *eth_dev_get_intr_handle(struct rte_eth_dev *dev)
+{
+	if (dev->pci_dev) {
+		return &dev->pci_dev->intr_handle;
+	}
+
+	RTE_VERIFY(0);
+	return NULL;
+}
+
 int
 rte_eth_dev_rx_intr_ctl(uint8_t port_id, int epfd, int op, void *data)
 {
@@ -2540,7 +2551,7 @@ rte_eth_dev_rx_intr_ctl(uint8_t port_id, int epfd, int op, void *data)
 	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -ENODEV);
 
 	dev = &rte_eth_devices[port_id];
-	intr_handle = &dev->pci_dev->intr_handle;
+	intr_handle = eth_dev_get_intr_handle(dev);
 	if (!intr_handle->intr_vec) {
 		RTE_PMD_DEBUG_TRACE("RX Intr vector unset\n");
 		return -EPERM;
@@ -2600,7 +2611,7 @@ rte_eth_dev_rx_intr_ctl_q(uint8_t port_id, uint16_t queue_id,
 		return -EINVAL;
 	}
 
-	intr_handle = &dev->pci_dev->intr_handle;
+	intr_handle = eth_dev_get_intr_handle(dev);
 	if (!intr_handle->intr_vec) {
 		RTE_PMD_DEBUG_TRACE("RX Intr vector unset\n");
 		return -EPERM;
