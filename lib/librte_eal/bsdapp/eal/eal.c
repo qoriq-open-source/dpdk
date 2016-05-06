@@ -64,6 +64,7 @@
 #include <rte_string_fns.h>
 #include <rte_cpuflags.h>
 #include <rte_interrupts.h>
+#include <rte_soc.h>
 #include <rte_pci.h>
 #include <rte_dev.h>
 #include <rte_devargs.h>
@@ -566,6 +567,9 @@ rte_eal_init(int argc, char **argv)
 
 	if (rte_eal_pci_init() < 0)
 		rte_panic("Cannot init PCI\n");
+
+	if (rte_eal_soc_init() < 0)
+		rte_panic("Cannot init SoC\n");
 
 	eal_check_mem_on_local_socket();
 

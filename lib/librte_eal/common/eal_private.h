@@ -130,6 +130,16 @@ int rte_eal_pci_init(void);
 struct rte_soc_driver;
 struct rte_soc_device;
 
+/**
+ * Init the SoC infra.
+ *
+ * This function is private to EAL.
+ *
+ * @return
+ *   0 on success, negative on error
+ */
+int rte_eal_soc_init(void);
+
 struct rte_pci_driver;
 struct rte_pci_device;
 
