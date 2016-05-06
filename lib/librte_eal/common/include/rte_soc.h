@@ -53,6 +53,7 @@ extern "C" {
 #include <rte_dev.h>
 #include <rte_eal.h>
 #include <rte_debug.h>
+#include <rte_interrupts.h>
 
 extern struct soc_driver_list soc_driver_list;
 /**< Global list of SoC Drivers */
@@ -81,6 +82,7 @@ struct rte_soc_device {
 	struct rte_device device;           /**< Inherit code device */
 	struct rte_soc_addr addr;           /**< SoC device Location */
 	struct rte_soc_id *id;              /**< SoC device ID list */
+	struct rte_intr_handle intr_handle; /**< Interrupt handle */
 	struct rte_soc_driver *driver;      /**< Associated driver */
 };
 
