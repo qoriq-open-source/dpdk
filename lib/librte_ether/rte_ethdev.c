@@ -2570,6 +2570,17 @@ rte_eth_dev_rx_intr_ctl(uint8_t port_id, int epfd, int op, void *data)
 	return 0;
 }
 
+static inline
+const char *eth_dev_get_driver_name(const struct rte_eth_dev *dev)
+{
+	if (dev->pci_dev) {
+		return dev->driver->pci_drv.driver.name;
+	}
+
+	RTE_VERIFY(0);
+	return NULL;
+}
+
 const struct rte_memzone *
 rte_eth_dma_zone_reserve(const struct rte_eth_dev *dev, const char *ring_name,
 			 uint16_t queue_id, size_t size, unsigned align,
@@ -2577,9 +2588,11 @@ rte_eth_dma_zone_reserve(const struct rte_eth_dev *dev, const char *ring_name,
 {
 	char z_name[RTE_MEMZONE_NAMESIZE];
 	const struct rte_memzone *mz;
+	const char *drv_name;
 
+	drv_name = eth_dev_get_driver_name(dev);
 	snprintf(z_name, sizeof(z_name), "%s_%s_%d_%d",
-		 dev->driver->pci_drv.driver.name, ring_name,
+		 drv_name, ring_name,
 		 dev->data->port_id, queue_id);
 
 	mz = rte_memzone_lookup(z_name);
