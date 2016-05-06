@@ -325,6 +325,101 @@ rte_eth_dev_pci_remove(struct rte_pci_device *pci_dev)
 }
 
 int
+rte_eth_dev_soc_probe(struct rte_soc_driver *soc_drv,
+		      struct rte_soc_device *soc_dev)
+{
+	struct eth_driver    *eth_drv;
+	struct rte_eth_dev *eth_dev;
+	char ethdev_name[RTE_ETH_NAME_MAX_LEN];
+
+	int diag;
+
+	eth_drv = container_of(soc_drv, struct eth_driver, soc_drv);
+
+	rte_eal_soc_device_name(&soc_dev->addr, ethdev_name,
+			sizeof(ethdev_name));
+
+	eth_dev = rte_eth_dev_allocate(ethdev_name);
+	if (eth_dev == NULL)
+		return -ENOMEM;
+
+	if (rte_eal_process_type() == RTE_PROC_PRIMARY) {
+		eth_dev->data->dev_private = rte_zmalloc(
+				  "ethdev private structure",
+				  eth_drv->dev_private_size,
+				  RTE_CACHE_LINE_SIZE);
+		if (eth_dev->data->dev_private == NULL)
+			rte_panic("Cannot allocate memzone for private port "
+				  "data\n");
+	}
+	eth_dev->soc_dev = soc_dev;
+	eth_dev->driver = eth_drv;
+	eth_dev->data->rx_mbuf_alloc_failed = 0;
+
+	/* init user callbacks */
+	TAILQ_INIT(&(eth_dev->link_intr_cbs));
+
+	/*
+	 * Set the default MTU.
+	 */
+	eth_dev->data->mtu = ETHER_MTU;
+
+	/* Invoke PMD device initialization function */
+	diag = (*eth_drv->eth_dev_init)(eth_dev);
+	if (diag == 0)
+		return 0;
+
+	RTE_PMD_DEBUG_TRACE("driver %s: eth_dev_init(%s) failed\n",
+			soc_drv->driver.name,
+			soc_dev->addr.name);
+	if (rte_eal_process_type() == RTE_PROC_PRIMARY)
+		rte_free(eth_dev->data->dev_private);
+	rte_eth_dev_release_port(eth_dev);
+	return diag;
+}
+
+int
+rte_eth_dev_soc_remove(struct rte_soc_device *soc_dev)
+{
+	const struct eth_driver *eth_drv;
+	struct rte_eth_dev *eth_dev;
+	char ethdev_name[RTE_ETH_NAME_MAX_LEN];
+	int ret;
+
+	if (soc_dev == NULL)
+		return -EINVAL;
+
+	rte_eal_soc_device_name(&soc_dev->addr, ethdev_name,
+			sizeof(ethdev_name));
+
+	eth_dev = rte_eth_dev_allocated(ethdev_name);
+	if (eth_dev == NULL)
+		return -ENODEV;
+
+	eth_drv = container_of(soc_dev->driver, struct eth_driver, soc_drv);
+
+	/* Invoke PMD device uninit function */
+	if (*eth_drv->eth_dev_uninit) {
+		ret = (*eth_drv->eth_dev_uninit)(eth_dev);
+		if (ret)
+			return ret;
+	}
+
+	/* free ether device */
+	rte_eth_dev_release_port(eth_dev);
+
+	if (rte_eal_process_type() == RTE_PROC_PRIMARY)
+		rte_free(eth_dev->data->dev_private);
+
+	eth_dev->soc_dev = NULL;
+	eth_dev->driver = NULL;
+	eth_dev->data = NULL;
+
+	return 0;
+}
+
+
+int
 rte_eth_dev_is_valid_port(uint8_t port_id)
 {
 	if (port_id >= RTE_MAX_ETHPORTS ||
@@ -1556,7 +1651,7 @@ rte_eth_dev_info_get(uint8_t port_id, struct rte_eth_dev_info *dev_info)
 
 	RTE_FUNC_PTR_OR_RET(*dev->dev_ops->dev_infos_get);
 	(*dev->dev_ops->dev_infos_get)(dev, dev_info);
-	dev_info->pci_dev = dev->pci_dev;
+	dev_info->soc_dev = dev->soc_dev;
 	dev_info->driver_name = dev->data->drv_name;
 	dev_info->nb_rx_queues = dev->data->nb_rx_queues;
 	dev_info->nb_tx_queues = dev->data->nb_tx_queues;
@@ -2532,7 +2627,12 @@ static inline
 struct rte_intr_handle *eth_dev_get_intr_handle(struct rte_eth_dev *dev)
 {
 	if (dev->pci_dev) {
+		RTE_VERIFY(dev->soc_dev == NULL);
 		return &dev->pci_dev->intr_handle;
+	}
+	if (dev->soc_dev) {
+		RTE_VERIFY(dev->pci_dev == NULL);
+		return &dev->soc_dev->intr_handle;
 	}
 
 	RTE_VERIFY(0);
@@ -2574,7 +2674,13 @@ static inline
 const char *eth_dev_get_driver_name(const struct rte_eth_dev *dev)
 {
 	if (dev->pci_dev) {
+		RTE_VERIFY(dev->soc_dev == NULL);
 		return dev->driver->pci_drv.driver.name;
+	}
+
+	if (dev->soc_dev) {
+		RTE_VERIFY(dev->pci_dev == NULL);
+		return dev->driver->soc_drv.driver.name;
 	}
 
 	RTE_VERIFY(0);
@@ -3237,6 +3343,28 @@ rte_eth_copy_pci_info(struct rte_eth_dev *eth_dev, struct rte_pci_device *pci_de
 	eth_dev->data->kdrv = pci_dev->kdrv;
 	eth_dev->data->numa_node = pci_dev->device.numa_node;
 	eth_dev->data->drv_name = pci_dev->driver->driver.name;
+}
+
+void
+rte_eth_copy_soc_info(struct rte_eth_dev *eth_dev,
+		      struct rte_soc_device *soc_dev)
+{
+	if ((eth_dev == NULL) || (soc_dev == NULL)) {
+		RTE_PMD_DEBUG_TRACE("NULL pointer eth_dev=%p soc_dev=%p\n",
+				eth_dev, soc_dev);
+		return;
+	}
+
+	RTE_VERIFY(eth_dev->soc_dev != NULL);
+
+	eth_dev->data->dev_flags = 0;
+	if (soc_dev->driver->drv_flags & RTE_SOC_DRV_INTR_LSC)
+		eth_dev->data->dev_flags |= RTE_ETH_DEV_INTR_LSC;
+	if (soc_dev->driver->drv_flags & RTE_SOC_DRV_DETACHABLE)
+		eth_dev->data->dev_flags |= RTE_ETH_DEV_DETACHABLE;
+
+	eth_dev->data->numa_node = soc_dev->device.numa_node;
+	eth_dev->data->drv_name = soc_dev->driver->driver.name;
 }
 
 int

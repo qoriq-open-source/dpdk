@@ -180,6 +180,7 @@ extern "C" {
 #include <rte_log.h>
 #include <rte_interrupts.h>
 #include <rte_pci.h>
+#include <rte_soc.h>
 #include <rte_dev.h>
 #include <rte_devargs.h>
 #include "rte_ether.h"
@@ -873,6 +874,7 @@ struct rte_eth_conf {
  */
 struct rte_eth_dev_info {
 	struct rte_pci_device *pci_dev; /**< Device PCI information. */
+	struct rte_soc_device *soc_dev; /**< Device SoC information. */
 	const char *driver_name; /**< Device Driver name. */
 	unsigned int if_index; /**< Index to bound host interface, or 0 if none.
 		Use if_indextoname() to translate into an interface name. */
@@ -1622,6 +1624,7 @@ struct rte_eth_dev {
 	const struct eth_driver *driver;/**< Driver for this device */
 	const struct eth_dev_ops *dev_ops; /**< Functions exported by PMD */
 	struct rte_pci_device *pci_dev; /**< PCI info. supplied by probing */
+	struct rte_soc_device *soc_dev; /**< SoC info. supplied by probing */
 	/** User application callbacks for NIC interrupts */
 	struct rte_eth_dev_cb_list link_intr_cbs;
 	/**
@@ -1856,6 +1859,7 @@ typedef int (*eth_dev_uninit_t)(struct rte_eth_dev *eth_dev);
  */
 struct eth_driver {
 	struct rte_pci_driver pci_drv;    /**< The PMD is also a PCI driver. */
+	struct rte_soc_driver soc_drv;    /**< The PMD is also a SoC driver. */
 	eth_dev_init_t eth_dev_init;      /**< Device init function. */
 	eth_dev_uninit_t eth_dev_uninit;  /**< Device uninit function. */
 	unsigned int dev_private_size;    /**< Size of device private data. */
@@ -4248,6 +4252,20 @@ void rte_eth_copy_pci_info(struct rte_eth_dev *eth_dev,
 		struct rte_pci_device *pci_dev);
 
 /**
+ * Copy SoC device info to the Ethernet device data.
+ *
+ * @param eth_dev
+ * The *eth_dev* pointer is the address of the *rte_eth_dev* structure.
+ * @param soc_dev
+ * The *soc_dev* pointer is the address of the *rte_soc_device* structure.
+ *
+ * @return
+ *   - 0 on success, negative on error
+ */
+void rte_eth_copy_soc_info(struct rte_eth_dev *eth_dev,
+		struct rte_soc_device *soc_dev);
+
+/**
  * Create memzone for HW rings.
  * malloc can't be used as the physical address is needed.
  * If the memzone is already created, then this function returns a ptr
@@ -4359,6 +4377,19 @@ int rte_eth_dev_pci_probe(struct rte_pci_driver *pci_drv,
  * interface.
  */
 int rte_eth_dev_pci_remove(struct rte_pci_device *pci_dev);
+
+/**
+ * Wrapper for use by SoC drivers as a .devinit function to attach to a ethdev
+ * interface.
+ */
+int rte_eth_dev_soc_probe(struct rte_soc_driver *soc_drv,
+			  struct rte_soc_device *soc_dev);
+
+/**
+ * Wrapper for use by SoC drivers as a .devuninit function to detach a ethdev
+ * interface.
+ */
+int rte_eth_dev_soc_remove(struct rte_soc_device *soc_dev);
 
 #ifdef __cplusplus
 }
