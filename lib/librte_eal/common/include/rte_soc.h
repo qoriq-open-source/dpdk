@@ -117,7 +117,17 @@ struct rte_soc_driver {
 	soc_scan_t *scan_fn;               /**< Callback for scanning SoC bus*/
 	soc_match_t *match_fn;             /**< Callback to match dev<->drv */
 	const struct rte_soc_id *id_table; /**< ID table, NULL terminated */
+	uint32_t drv_flags;                /**< Control handling of device */
 };
+
+/** Device needs to map its resources by EAL */
+#define RTE_SOC_DRV_NEED_MAPPING 0x0001
+/** Device needs to be unbound event if no module is provieded */
+#define RTE_SOC_DRV_FORCE_UNBIND 0x0004
+/** Device driver supports link state interrupt */
+#define RTE_SOC_DRV_INTR_LSC	 0x0008
+/** Device driver supports detaching capability */
+#define RTE_SOC_DRV_DETACHABLE	 0x0010
 
 /**
  * Utility function to write a SoC device name, this device name can later be
