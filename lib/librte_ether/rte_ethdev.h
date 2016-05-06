@@ -1846,7 +1846,7 @@ typedef int (*eth_dev_uninit_t)(struct rte_eth_dev *eth_dev);
  * Each Ethernet driver acts as a PCI driver and is represented by a generic
  * *eth_driver* structure that holds:
  *
- * - An *rte_pci_driver* structure (which must be the first field).
+ * - An *rte_pci_driver* structure.
  *
  * - The *eth_dev_init* function invoked for each matching PCI device.
  *

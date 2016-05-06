@@ -241,7 +241,7 @@ rte_eth_dev_pci_probe(struct rte_pci_driver *pci_drv,
 
 	int diag;
 
-	eth_drv = (struct eth_driver *)pci_drv;
+	eth_drv = container_of(pci_drv, struct eth_driver, pci_drv);
 
 	rte_eal_pci_device_name(&pci_dev->addr, ethdev_name,
 			sizeof(ethdev_name));
@@ -302,7 +302,7 @@ rte_eth_dev_pci_remove(struct rte_pci_device *pci_dev)
 	if (eth_dev == NULL)
 		return -ENODEV;
 
-	eth_drv = (const struct eth_driver *)pci_dev->driver;
+	eth_drv = container_of(pci_dev->driver, struct eth_driver, pci_drv);
 
 	/* Invoke PMD device uninit function */
 	if (*eth_drv->eth_dev_uninit) {
