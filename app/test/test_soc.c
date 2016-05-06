@@ -75,6 +75,108 @@ static int test_compare_addr(void)
 	free(a2.name);
 	free(a1.name);
 	free(a0.name);
+
+	return 0;
+}
+
+/**
+ * Empty PMD driver based on the SoC infra.
+ *
+ * The rte_soc_device is usually wrapped in some higher-level struct
+ * (eth_driver). We simulate such a wrapper with an anonymous struct here.
+ */
+struct test_wrapper {
+	struct rte_soc_driver soc_drv;
+};
+
+struct test_wrapper empty_pmd0 = {
+	.soc_drv = {
+		.driver = {
+			.name = "empty_pmd0"
+		},
+	},
+};
+
+struct test_wrapper empty_pmd1 = {
+	.soc_drv = {
+		.driver = {
+			.name = "empty_pmd1"
+		},
+	},
+};
+
+static int
+count_registered_socdrvs(void)
+{
+	int i;
+	struct rte_soc_driver *drv;
+
+	i = 0;
+	TAILQ_FOREACH(drv, &soc_driver_list, next)
+		i += 1;
+
+	return i;
+}
+
+static int
+test_register_unregister(void)
+{
+	struct rte_soc_driver *drv;
+	int count;
+
+	rte_eal_soc_register(&empty_pmd0.soc_drv);
+
+	TEST_ASSERT(!TAILQ_EMPTY(&soc_driver_list),
+		    "No PMD is present but the empty_pmd0 should be there");
+	drv = TAILQ_FIRST(&soc_driver_list);
+	TEST_ASSERT(!strcmp(drv->driver.name, "empty_pmd0"),
+		    "The registered PMD is not empty_pmd but '%s'",
+		drv->driver.name);
+
+	rte_eal_soc_register(&empty_pmd1.soc_drv);
+
+	count = count_registered_socdrvs();
+	TEST_ASSERT_EQUAL(count, 2, "Expected 2 PMDs but detected %d", count);
+
+	rte_eal_soc_unregister(&empty_pmd0.soc_drv);
+	count = count_registered_socdrvs();
+	TEST_ASSERT_EQUAL(count, 1, "Expected 1 PMDs but detected %d", count);
+
+	rte_eal_soc_unregister(&empty_pmd1.soc_drv);
+
+	printf("%s has been successful\n", __func__);
+	return 0;
+}
+
+/* save real devices and drivers until the tests finishes */
+struct soc_driver_list real_soc_driver_list =
+	TAILQ_HEAD_INITIALIZER(real_soc_driver_list);
+
+static int test_soc_setup(void)
+{
+	struct rte_soc_driver *drv;
+
+	/* no real drivers for the test */
+	while (!TAILQ_EMPTY(&soc_driver_list)) {
+		drv = TAILQ_FIRST(&soc_driver_list);
+		rte_eal_soc_unregister(drv);
+		TAILQ_INSERT_TAIL(&real_soc_driver_list, drv, next);
+	}
+
+	return 0;
+}
+
+static int test_soc_cleanup(void)
+{
+	struct rte_soc_driver *drv;
+
+	/* bring back real drivers after the test */
+	while (!TAILQ_EMPTY(&real_soc_driver_list)) {
+		drv = TAILQ_FIRST(&real_soc_driver_list);
+		TAILQ_REMOVE(&real_soc_driver_list, drv, next);
+		rte_eal_soc_register(drv);
+	}
+
 	return 0;
 }
 
@@ -82,6 +184,15 @@ static int
 test_soc(void)
 {
 	if (test_compare_addr())
+		return -1;
+
+	if (test_soc_setup())
+		return -1;
+
+	if (test_register_unregister())
+		return -1;
+
+	if (test_soc_cleanup())
 		return -1;
 
 	return 0;
