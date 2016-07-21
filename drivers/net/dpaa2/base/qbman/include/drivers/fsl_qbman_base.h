@@ -25,6 +25,8 @@
 #ifndef _FSL_QBMAN_BASE_H
 #define _FSL_QBMAN_BASE_H
 
+typedef uint64_t  dma_addr_t;
+
 /**
  * DOC: QBMan basic structures
  *
@@ -32,6 +34,10 @@
  * are defined here.
  *
  */
+
+#define QMAN_REV_4000   0x04000000
+#define QMAN_REV_4100   0x04010000
+#define QMAN_REV_4101   0x04010001
 
 /**
  * struct qbman_block_desc - qbman block descriptor structure

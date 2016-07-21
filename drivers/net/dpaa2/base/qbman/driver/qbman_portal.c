@@ -96,7 +96,9 @@ struct qb_attr_code code_sdqcr_dqsrc = QB_CODE(0, 0, 16);
    so keep an array of portal IDs and use the token field to
    be able to find the proper portal */
 #define MAX_QBMAN_PORTALS  35
-static struct qbman_swp * portal_idx_map[MAX_QBMAN_PORTALS];
+static struct qbman_swp *portal_idx_map[MAX_QBMAN_PORTALS];
+
+uint32_t qman_version;
 
 /*********************************/
 /* Portal constructor/destructor */
@@ -842,7 +844,7 @@ int qbman_result_has_new_result(__attribute__((unused)) struct qbman_swp *s,
 	/* Entry is valid - overwrite token back to 0 so
 	   a) If this memory is reused tokesn will be 0
 	   b) If someone calls "has_new_result()" again on this entry it
-   	      will not appear to be new */
+	      will not appear to be new */
 	qb_attr_code_encode(&code_dqrr_tok_detect, &p[1], 0);
 
 	/* Only now do we convert from hardware to host endianness. Also, as we
@@ -873,7 +875,7 @@ int qbman_check_command_complete(struct qbman_swp *s,
 	token = qb_attr_code_decode(&code_dqrr_tok_detect, &p[1]);
 	if (token == 0)
 		return 0;
-	/* TODO: Remove qbman_swp from paramters and make it a local
+	/* TODO: Remove qbman_swp from parameters and make it a local
 	   once we've tested the reserve portal map change */
 	s = portal_idx_map[token - 1];
 	/*When token is set it indicates that  VDQ command has been fetched by qbman and
@@ -1454,4 +1456,9 @@ done:
 	s->eqcr.pi = initial_pi;
 
 	return sent;
+}
+
+int qbman_get_version(void)
+{
+	return qman_version;
 }
