@@ -168,4 +168,7 @@ DPDK_16.11 {
 
 	rte_eal_dev_attach;
 	rte_eal_dev_detach;
+	rte_eal_vdrv_register;
+	rte_eal_vdrv_unregister;
+
 } DPDK_16.07;
