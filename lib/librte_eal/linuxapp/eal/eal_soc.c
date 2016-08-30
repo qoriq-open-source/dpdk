@@ -52,5 +52,21 @@
 int
 rte_eal_soc_init(void)
 {
+	struct rte_soc_driver *drv;
+
+	/* for debug purposes, SoC can be disabled */
+	if (internal_config.no_soc)
+		return 0;
+
+	/* For each registered driver, call their scan routine to perform any
+	 * custom scan for devices (for example, custom buses)
+	 */
+	TAILQ_FOREACH(drv, &soc_driver_list, next) {
+		if (drv && drv->scan_fn) {
+			drv->scan_fn();
+			/* Ignore all errors from this */
+		}
+	}
+
 	return 0;
 }

@@ -70,6 +70,7 @@
 #include <rte_cpuflags.h>
 #include <rte_interrupts.h>
 #include <rte_pci.h>
+#include <rte_soc.h>
 #include <rte_dev.h>
 #include <rte_devargs.h>
 #include <rte_common.h>
@@ -879,6 +880,10 @@ rte_eal_init(int argc, char **argv)
 	/* Probe & Initialize PCI devices */
 	if (rte_eal_pci_probe())
 		rte_panic("Cannot probe PCI\n");
+
+	/* Probe & Initialize SoC devices */
+	if (rte_eal_soc_probe())
+		rte_panic("Cannot probe SoC\n");
 
 	rte_eal_mcfg_complete();
 

@@ -172,6 +172,9 @@ DPDK_16.11 {
 
 	rte_eal_dev_attach;
 	rte_eal_dev_detach;
+	rte_eal_soc_detach;
+	rte_eal_soc_probe;
+	rte_eal_soc_probe_one;
 	rte_eal_soc_register;
 	rte_eal_soc_unregister;
 	rte_eal_vdrv_register;

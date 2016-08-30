@@ -97,6 +97,16 @@ typedef int (soc_devinit_t)(struct rte_soc_driver *, struct rte_soc_device *);
 typedef int (soc_devuninit_t)(struct rte_soc_device *);
 
 /**
+ * SoC device scan callback, called from rte_eal_soc_init.
+ */
+typedef void (soc_scan_t)(void);
+
+/**
+ * Custom device<=>driver match callback for SoC
+ */
+typedef int (soc_match_t)(struct rte_soc_driver *, struct rte_soc_device *);
+
+/**
  * A structure describing a SoC driver.
  */
 struct rte_soc_driver {
@@ -104,6 +114,8 @@ struct rte_soc_driver {
 	struct rte_driver driver;          /**< Inherit core driver. */
 	soc_devinit_t *devinit;            /**< Device initialization */
 	soc_devuninit_t *devuninit;        /**< Device uninitialization */
+	soc_scan_t *scan_fn;               /**< Callback for scanning SoC bus*/
+	soc_match_t *match_fn;             /**< Callback to match dev<->drv */
 	const struct rte_soc_id *id_table; /**< ID table, NULL terminated */
 };
 
@@ -144,6 +156,31 @@ rte_eal_compare_soc_addr(const struct rte_soc_addr *a0,
 
 	return strcmp(a0->name, a1->name);
 }
+
+/**
+ * Probe SoC devices for registered drivers.
+ */
+int rte_eal_soc_probe(void);
+
+/**
+ * Probe the single SoC device.
+ */
+int rte_eal_soc_probe_one(const struct rte_soc_addr *addr);
+
+/**
+ * Close the single SoC device.
+ *
+ * Scan the SoC devices and find the SoC device specified by the SoC
+ * address, then call the devuninit() function for registered driver
+ * that has a matching entry in its id_table for discovered device.
+ *
+ * @param addr
+ *	The SoC address to close.
+ * @return
+ *   - 0 on success.
+ *   - Negative on error.
+ */
+int rte_eal_soc_detach(const struct rte_soc_addr *addr);
 
 /**
  * Dump discovered SoC devices.

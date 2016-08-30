@@ -87,14 +87,45 @@ static int test_compare_addr(void)
  */
 struct test_wrapper {
 	struct rte_soc_driver soc_drv;
+	struct rte_soc_device soc_dev;
 };
+
+static int empty_pmd0_devinit(struct rte_soc_driver *drv,
+			      struct rte_soc_device *dev);
+static int empty_pmd0_devuninit(struct rte_soc_device *dev);
+static void test_soc_scan_dev0_cb(void);
+static int test_soc_match_dev0_cb(struct rte_soc_driver *drv,
+				  struct rte_soc_device *dev);
+static void test_soc_scan_dev1_cb(void);
+static int test_soc_match_dev1_cb(struct rte_soc_driver *drv,
+				  struct rte_soc_device *dev);
+
+static int
+empty_pmd0_devinit(struct rte_soc_driver *drv __rte_unused,
+		   struct rte_soc_device *dev __rte_unused)
+{
+	return 0;
+}
+
+static int
+empty_pmd0_devuninit(struct rte_soc_device *dev)
+{
+	/* Release the memory associated with dev->addr.name */
+	free(dev->addr.name);
+
+	return 0;
+}
 
 struct test_wrapper empty_pmd0 = {
 	.soc_drv = {
 		.driver = {
 			.name = "empty_pmd0"
 		},
-	},
+		.devinit = empty_pmd0_devinit,
+		.devuninit = empty_pmd0_devuninit,
+		.scan_fn = test_soc_scan_dev0_cb,
+		.match_fn = test_soc_match_dev0_cb,
+	}
 };
 
 struct test_wrapper empty_pmd1 = {
@@ -102,8 +133,53 @@ struct test_wrapper empty_pmd1 = {
 		.driver = {
 			.name = "empty_pmd1"
 		},
+		.scan_fn = test_soc_scan_dev1_cb,
+		.match_fn = test_soc_match_dev1_cb,
 	},
 };
+
+static void
+test_soc_scan_dev0_cb(void)
+{
+	/* SoC's scan would scan devices on its bus and add to
+	 * soc_device_list
+	 */
+	empty_pmd0.soc_dev.addr.name = strdup("empty_pmd0_dev");
+
+	TAILQ_INSERT_TAIL(&soc_device_list, &empty_pmd0.soc_dev, next);
+}
+
+static int
+test_soc_match_dev0_cb(struct rte_soc_driver *drv __rte_unused,
+		       struct rte_soc_device *dev)
+{
+	if (!dev->addr.name || strcmp(dev->addr.name, "empty_pmd0_dev"))
+		return 0;
+
+	return 1;
+}
+
+
+static void
+test_soc_scan_dev1_cb(void)
+{
+	/* SoC's scan would scan devices on its bus and add to
+	 * soc_device_list
+	 */
+	empty_pmd0.soc_dev.addr.name = strdup("empty_pmd1_dev");
+
+	TAILQ_INSERT_TAIL(&soc_device_list, &empty_pmd1.soc_dev, next);
+}
+
+static int
+test_soc_match_dev1_cb(struct rte_soc_driver *drv __rte_unused,
+		       struct rte_soc_device *dev)
+{
+	if (!dev->addr.name || strcmp(dev->addr.name, "empty_pmd1_dev"))
+		return 0;
+
+	return 1;
+}
 
 static int
 count_registered_socdrvs(void)
@@ -148,13 +224,54 @@ test_register_unregister(void)
 	return 0;
 }
 
+/* Test Probe (scan and match) functionality */
+static int
+test_soc_init_and_probe(void)
+{
+	struct rte_soc_driver *drv;
+
+	/* Registering dummy drivers */
+	rte_eal_soc_register(&empty_pmd0.soc_drv);
+	rte_eal_soc_register(&empty_pmd1.soc_drv);
+	/* Assuming that test_register_unregister is working, not verifying
+	 * that drivers are indeed registered
+	*/
+
+	/* rte_eal_soc_init is called by rte_eal_init, which in turn calls the
+	 * scan_fn of each driver.
+	 */
+	TAILQ_FOREACH(drv, &soc_driver_list, next) {
+		if (drv && drv->scan_fn)
+			drv->scan_fn();
+	}
+
+	/* rte_eal_init() would perform other inits here */
+
+	/* Probe would link the SoC devices<=>drivers */
+	rte_eal_soc_probe();
+
+	/* Unregistering dummy drivers */
+	rte_eal_soc_unregister(&empty_pmd0.soc_drv);
+	rte_eal_soc_unregister(&empty_pmd1.soc_drv);
+
+	free(empty_pmd0.soc_dev.addr.name);
+
+	printf("%s has been successful\n", __func__);
+	return 0;
+}
+
 /* save real devices and drivers until the tests finishes */
 struct soc_driver_list real_soc_driver_list =
 	TAILQ_HEAD_INITIALIZER(real_soc_driver_list);
 
+/* save real devices and drivers until the tests finishes */
+struct soc_device_list real_soc_device_list =
+	TAILQ_HEAD_INITIALIZER(real_soc_device_list);
+
 static int test_soc_setup(void)
 {
 	struct rte_soc_driver *drv;
+	struct rte_soc_device *dev;
 
 	/* no real drivers for the test */
 	while (!TAILQ_EMPTY(&soc_driver_list)) {
@@ -163,18 +280,33 @@ static int test_soc_setup(void)
 		TAILQ_INSERT_TAIL(&real_soc_driver_list, drv, next);
 	}
 
+	/* And, no real devices for the test */
+	while (!TAILQ_EMPTY(&soc_device_list)) {
+		dev = TAILQ_FIRST(&soc_device_list);
+		/* TODO: detach the device */
+		TAILQ_INSERT_TAIL(&real_soc_device_list, dev, next);
+	}
+
 	return 0;
 }
 
 static int test_soc_cleanup(void)
 {
 	struct rte_soc_driver *drv;
+	struct rte_soc_device *dev;
 
 	/* bring back real drivers after the test */
 	while (!TAILQ_EMPTY(&real_soc_driver_list)) {
 		drv = TAILQ_FIRST(&real_soc_driver_list);
 		TAILQ_REMOVE(&real_soc_driver_list, drv, next);
 		rte_eal_soc_register(drv);
+	}
+
+	/* And, bring back real devices after the test */
+	while (!TAILQ_EMPTY(&real_soc_device_list)) {
+		dev = TAILQ_FIRST(&real_soc_device_list);
+		TAILQ_REMOVE(&real_soc_device_list, dev, next);
+		/* TODO: Attach the device */
 	}
 
 	return 0;
@@ -190,6 +322,10 @@ test_soc(void)
 		return -1;
 
 	if (test_register_unregister())
+		return -1;
+
+	/* Assuming test_register_unregister has succeeded */
+	if (test_soc_init_and_probe())
 		return -1;
 
 	if (test_soc_cleanup())
