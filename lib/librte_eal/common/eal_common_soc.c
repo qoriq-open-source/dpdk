@@ -31,6 +31,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stddef.h>
+#include <stdio.h>
 #include <sys/queue.h>
 
 #include <rte_log.h>
@@ -40,6 +42,38 @@
 /* Global SoC driver list */
 struct soc_driver_list soc_driver_list =
 	TAILQ_HEAD_INITIALIZER(soc_driver_list);
+struct soc_device_list soc_device_list =
+	TAILQ_HEAD_INITIALIZER(soc_device_list);
+
+/* dump one device */
+static int
+soc_dump_one_device(FILE *f, struct rte_soc_device *dev)
+{
+	int i;
+
+	fprintf(f, "%s", dev->addr.name);
+	fprintf(f, " - fdt_path: %s\n",
+			dev->addr.fdt_path ? dev->addr.fdt_path : "(none)");
+
+	for (i = 0; dev->id && dev->id[i].compatible; ++i)
+		fprintf(f, "   %s\n", dev->id[i].compatible);
+
+	return 0;
+}
+
+/* dump devices on the bus to an output stream */
+void
+rte_eal_soc_dump(FILE *f)
+{
+	struct rte_soc_device *dev = NULL;
+
+	if (!f)
+		return;
+
+	TAILQ_FOREACH(dev, &soc_device_list, next) {
+		soc_dump_one_device(f, dev);
+	}
+}
 
 /* register a driver */
 void

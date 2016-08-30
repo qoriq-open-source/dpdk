@@ -56,8 +56,12 @@ extern "C" {
 
 extern struct soc_driver_list soc_driver_list;
 /**< Global list of SoC Drivers */
+extern struct soc_device_list soc_device_list;
+/**< Global list of SoC Devices */
 
 TAILQ_HEAD(soc_driver_list, rte_soc_driver); /**< SoC drivers in D-linked Q. */
+TAILQ_HEAD(soc_device_list, rte_soc_device); /**< SoC devices in D-linked Q. */
+
 
 struct rte_soc_id {
 	const char *compatible; /**< OF compatible specification */
@@ -140,6 +144,11 @@ rte_eal_compare_soc_addr(const struct rte_soc_addr *a0,
 
 	return strcmp(a0->name, a1->name);
 }
+
+/**
+ * Dump discovered SoC devices.
+ */
+void rte_eal_soc_dump(FILE *f);
 
 /**
  * Register a SoC driver.

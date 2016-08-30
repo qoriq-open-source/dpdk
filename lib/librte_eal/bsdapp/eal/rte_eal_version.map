@@ -172,6 +172,8 @@ DPDK_16.11 {
 	rte_eal_soc_unregister;
 	rte_eal_vdrv_register;
 	rte_eal_vdrv_unregister;
+	rte_eal_soc_dump;
 	soc_driver_list;
+	soc_device_list;
 
 } DPDK_16.07;
