@@ -48,6 +48,7 @@ extern "C" {
 
 #include <rte_dev.h>
 #include <rte_pci.h>
+#include <rte_soc.h>
 #include <rte_malloc.h>
 #include <rte_mbuf.h>
 #include <rte_mempool.h>
@@ -132,6 +133,7 @@ typedef int (*cryptodev_uninit_t)(const struct rte_cryptodev_driver  *drv,
  */
 struct rte_cryptodev_driver {
 	struct rte_pci_driver pci_drv;	/**< The PMD is also a PCI driver. */
+	struct rte_soc_driver soc_drv;    /**< The PMD is also a SoC driver. */
 	unsigned dev_private_size;	/**< Size of device private data. */
 
 	cryptodev_init_t cryptodev_init;	/**< Device init function. */
@@ -518,6 +520,20 @@ int rte_cryptodev_pci_probe(struct rte_pci_driver *pci_drv,
  * interface.
  */
 int rte_cryptodev_pci_remove(struct rte_pci_device *pci_dev);
+
+/**
+ * Wrapper for use by SoC drivers as a .devinit function to attach to a cryptodev
+ * interface.
+ */
+int rte_cryptodev_soc_probe(struct rte_soc_driver *soc_drv,
+			  struct rte_soc_device *soc_dev);
+
+/**
+ * Wrapper for use by SoC drivers as a .devuninit function to detach a cryptodev
+ * interface.
+ */
+int rte_cryptodev_soc_remove(struct rte_soc_device *soc_dev);
+
 
 #ifdef __cplusplus
 }

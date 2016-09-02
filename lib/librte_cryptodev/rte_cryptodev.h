@@ -238,6 +238,7 @@ struct rte_cryptodev_info {
 	const char *driver_name;		/**< Driver name. */
 	enum rte_cryptodev_type dev_type;	/**< Device type */
 	struct rte_pci_device *pci_dev;		/**< PCI information. */
+	struct rte_soc_device *soc_dev;		/**< SoC information. */
 
 	uint64_t feature_flags;			/**< Feature flags */
 
@@ -617,6 +618,8 @@ struct rte_cryptodev {
 	/**< Supported features */
 	struct rte_pci_device *pci_dev;
 	/**< PCI info. supplied by probing */
+	struct rte_soc_device *soc_dev;
+	/**< SoC info. supplied by probing */
 
 	enum rte_cryptodev_type dev_type;
 	/**< Crypto device type */

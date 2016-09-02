@@ -422,9 +422,7 @@ rte_cryptodev_pci_probe(struct rte_pci_driver *pci_drv,
 
 	int retval;
 
-	cryptodrv = (struct rte_cryptodev_driver *)pci_drv;
-	if (cryptodrv == NULL)
-		return -ENODEV;
+	cryptodrv = container_of(pci_drv, struct rte_cryptodev_driver, pci_drv);
 
 	rte_eal_pci_device_name(&pci_dev->addr, cryptodev_name,
 			sizeof(cryptodev_name));
@@ -489,9 +487,8 @@ rte_cryptodev_pci_remove(struct rte_pci_device *pci_dev)
 	if (cryptodev == NULL)
 		return -ENODEV;
 
-	cryptodrv = (const struct rte_cryptodev_driver *)pci_dev->driver;
-	if (cryptodrv == NULL)
-		return -ENODEV;
+	cryptodrv = container_of(pci_dev->driver,
+		struct rte_cryptodev_driver, pci_drv);
 
 	/* Invoke PMD device uninit function */
 	if (*cryptodrv->cryptodev_uninit) {
@@ -512,6 +509,109 @@ rte_cryptodev_pci_remove(struct rte_pci_device *pci_dev)
 
 	return 0;
 }
+
+
+int
+rte_cryptodev_soc_probe(struct rte_soc_driver *soc_drv,
+		      struct rte_soc_device *soc_dev)
+{
+	struct rte_cryptodev_driver *cryptodrv;
+	struct rte_cryptodev *cryptodev;
+
+	char cryptodev_name[RTE_CRYPTODEV_NAME_MAX_LEN];
+
+	int retval;
+
+	cryptodrv = container_of(soc_drv, struct rte_cryptodev_driver, soc_drv);
+
+	rte_eal_soc_device_name(&soc_dev->addr, cryptodev_name,
+			sizeof(cryptodev_name));
+
+	cryptodev = rte_cryptodev_pmd_allocate(cryptodev_name, rte_socket_id());
+	if (cryptodev == NULL)
+		return -ENOMEM;
+
+
+	if (rte_eal_process_type() == RTE_PROC_PRIMARY) {
+		cryptodev->data->dev_private =
+				rte_zmalloc_socket(
+						"cryptodev private structure",
+						cryptodrv->dev_private_size,
+						RTE_CACHE_LINE_SIZE,
+						rte_socket_id());
+
+		if (cryptodev->data->dev_private == NULL)
+			rte_panic("Cannot allocate memzone for private "
+					"device data");
+	}
+
+	cryptodev->soc_dev = soc_dev;
+	cryptodev->driver = cryptodrv;
+
+	/* init user callbacks */
+	TAILQ_INIT(&(cryptodev->link_intr_cbs));
+
+	/* Invoke PMD device initialization function */
+	retval = (*cryptodrv->cryptodev_init)(cryptodrv, cryptodev);
+	if (retval == 0)
+		return 0;
+
+	CDEV_LOG_ERR("driver %s: cryptodev_init(%s) failed\n",
+			soc_drv->driver.name,
+			soc_dev->addr.name);
+
+	if (rte_eal_process_type() == RTE_PROC_PRIMARY)
+		rte_free(cryptodev->data->dev_private);
+
+	cryptodev->attached = RTE_CRYPTODEV_DETACHED;
+	cryptodev_globals.nb_devs--;
+
+	return -ENXIO;
+}
+
+int
+rte_cryptodev_soc_remove(struct rte_soc_device *soc_dev)
+{
+	const struct rte_cryptodev_driver *cryptodrv;
+	struct rte_cryptodev *cryptodev;
+	char cryptodev_name[RTE_CRYPTODEV_NAME_MAX_LEN];
+	int ret;
+
+	if (soc_dev == NULL)
+		return -EINVAL;
+
+	rte_eal_soc_device_name(&soc_dev->addr, cryptodev_name,
+			sizeof(cryptodev_name));
+
+	cryptodev = rte_cryptodev_pmd_get_named_dev(cryptodev_name);
+	if (cryptodev == NULL)
+		return -ENODEV;
+
+	cryptodrv = container_of(soc_dev->driver,
+		struct rte_cryptodev_driver, soc_drv);
+	if (cryptodrv == NULL)
+		return -ENODEV;
+
+	/* Invoke PMD device uninit function */
+	if (*cryptodrv->cryptodev_uninit) {
+		ret = (*cryptodrv->cryptodev_uninit)(cryptodrv, cryptodev);
+		if (ret)
+			return ret;
+	}
+
+	/* free crypto device */
+	rte_cryptodev_pmd_release_device(cryptodev);
+
+	if (rte_eal_process_type() == RTE_PROC_PRIMARY)
+		rte_free(cryptodev->data->dev_private);
+
+	cryptodev->soc_dev = NULL;
+	cryptodev->driver = NULL;
+	cryptodev->data = NULL;
+
+	return 0;
+}
+
 
 uint16_t
 rte_cryptodev_queue_pair_count(uint8_t dev_id)
@@ -868,8 +968,15 @@ rte_cryptodev_info_get(uint8_t dev_id, struct rte_cryptodev_info *dev_info)
 	(*dev->dev_ops->dev_infos_get)(dev, dev_info);
 
 	dev_info->pci_dev = dev->pci_dev;
-	if (dev->driver)
-		dev_info->driver_name = dev->driver->pci_drv.driver.name;
+	dev_info->soc_dev = dev->soc_dev;
+	if (dev->driver) {
+		if (dev->soc_dev)
+			dev_info->driver_name
+				= dev->driver->soc_drv.driver.name;
+		else
+			dev_info->driver_name
+				= dev->driver->pci_drv.driver.name;
+	}
 }
 
 
