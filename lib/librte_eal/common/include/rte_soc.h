@@ -194,6 +194,17 @@ rte_eal_parse_soc_spec(const char *spec, struct rte_soc_addr *addr)
 }
 
 /**
+ * Default function for matching the Soc driver with device. Each driver can either use this
+ * function or define their own soc matching function.
+ *
+ * @return
+ *      -  0 on success
+ *      -  -1 when no match found
+  */
+int
+rte_eal_soc_match(struct rte_soc_driver *drv, struct rte_soc_device *dev);
+
+/**
  * Probe SoC devices for registered drivers.
  */
 int rte_eal_soc_probe(void);

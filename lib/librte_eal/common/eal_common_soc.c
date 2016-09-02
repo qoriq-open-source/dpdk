@@ -64,6 +64,37 @@ static struct rte_devargs *soc_devargs_lookup(struct rte_soc_device *dev)
 	return NULL;
 }
 
+/**
+ * Default function for matching the Soc driver with device. Each driver can either use this
+ * function or define their own soc matching function.
+ *
+ * @return
+ *      -  0 on success
+ *      -  1 when no match found
+ *      -  -1 when error encounterd in match - need to stop further matching
+ */
+int
+rte_eal_soc_match(struct rte_soc_driver *drv, struct rte_soc_device *dev)
+{
+	int i, j;
+
+	RTE_VERIFY(drv != NULL && drv->id_table != NULL);
+	RTE_VERIFY(dev != NULL && dev->id != NULL);
+
+	for (i = 0; drv->id_table[i].compatible; ++i) {
+		const char *drv_compat = drv->id_table[i].compatible;
+
+		for (j = 0; dev->id[j].compatible; ++j) {
+			const char *dev_compat = dev->id[j].compatible;
+
+			if (!strcmp(drv_compat, dev_compat))
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
 static int
 rte_eal_soc_probe_one_driver(struct rte_soc_driver *drv,
 			     struct rte_soc_device *dev)
@@ -71,7 +102,7 @@ rte_eal_soc_probe_one_driver(struct rte_soc_driver *drv,
 	int ret = 1;
 
 	ret = drv->match_fn(drv, dev);
-	if (!ret) {
+	if (ret) {
 		RTE_LOG(DEBUG, EAL,
 			" match function failed, skipping\n");
 		return ret;
@@ -97,14 +128,14 @@ rte_eal_soc_probe_one_driver(struct rte_soc_driver *drv,
 static int
 soc_probe_all_drivers(struct rte_soc_device *dev)
 {
-	struct rte_soc_driver *dr = NULL;
+	struct rte_soc_driver *drv = NULL;
 	int rc = 0;
 
 	if (dev == NULL)
 		return -1;
 
-	TAILQ_FOREACH(dr, &soc_driver_list, next) {
-		rc = rte_eal_soc_probe_one_driver(dr, dev);
+	TAILQ_FOREACH(drv, &soc_driver_list, next) {
+		rc = rte_eal_soc_probe_one_driver(drv, dev);
 		if (rc < 0)
 			/* negative value is an error */
 			return -1;
@@ -127,7 +158,7 @@ rte_eal_soc_detach_dev(struct rte_soc_driver *drv,
 		return -EINVAL;
 
 	ret = drv->match_fn(drv, dev);
-	if (!ret) {
+	if (ret) {
 		RTE_LOG(DEBUG, EAL,
 			" match function failed, skipping\n");
 		return ret;
