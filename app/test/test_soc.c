@@ -283,7 +283,7 @@ static int test_soc_setup(void)
 	/* And, no real devices for the test */
 	while (!TAILQ_EMPTY(&soc_device_list)) {
 		dev = TAILQ_FIRST(&soc_device_list);
-		/* TODO: detach the device */
+		TAILQ_REMOVE(&soc_device_list, dev, next);
 		TAILQ_INSERT_TAIL(&real_soc_device_list, dev, next);
 	}
 
@@ -306,7 +306,7 @@ static int test_soc_cleanup(void)
 	while (!TAILQ_EMPTY(&real_soc_device_list)) {
 		dev = TAILQ_FIRST(&real_soc_device_list);
 		TAILQ_REMOVE(&real_soc_device_list, dev, next);
-		/* TODO: Attach the device */
+		TAILQ_INSERT_TAIL(&soc_device_list, dev, next);
 	}
 
 	return 0;
