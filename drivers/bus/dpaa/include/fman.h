@@ -406,6 +406,8 @@ struct __fman_if {
  */
 extern const struct list_head *fman_if_list;
 
+extern int fman_ccsr_map_fd;
+
 /* To display MAC addresses (of type "struct ether_addr") via printf()-style
  * interfaces, these macros may come in handy. Eg;
  *        struct fman_if *p = get_ptr_to_some_interface();
