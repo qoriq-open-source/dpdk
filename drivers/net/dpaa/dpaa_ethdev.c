@@ -158,6 +158,7 @@ static void dpaa_eth_dev_info(struct rte_eth_dev *dev,
 	dev_info->max_hash_mac_addrs = 0;
 	dev_info->max_vfs = 0;
 	dev_info->max_vmdq_pools = ETH_16_POOLS;
+	dev_info->flow_type_rss_offloads = DPAA_RSS_OFFLOAD_ALL;
 }
 
 static int dpaa_eth_link_update(struct rte_eth_dev *dev,
