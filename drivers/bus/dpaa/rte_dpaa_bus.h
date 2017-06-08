@@ -43,6 +43,7 @@
 #include <netcfg.h>
 
 #define FSL_DPAA_BUS_NAME	"FSL_DPAA_BUS"
+#define FSL_DPAA_MAX_CRYPTO_DEV	4
 
 #define DEV_TO_DPAA_DEVICE(ptr)	\
 		container_of(ptr, struct rte_dpaa_device, device)

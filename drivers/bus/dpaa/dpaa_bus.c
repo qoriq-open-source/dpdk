@@ -69,9 +69,11 @@
 #include <fsl_bman.h>
 #include <of.h>
 #include <netcfg.h>
+#include <hw/rta.h>
 
 struct rte_dpaa_bus rte_dpaa_bus;
 struct netcfg_info *dpaa_netcfg;
+enum rta_sec_era rta_sec_era;
 
 /* define a variable to hold the portal_key, once created.*/
 pthread_key_t dpaa_portal_key;
@@ -88,6 +90,27 @@ static inline void
 dpaa_remove_from_device_list(struct rte_dpaa_device *dev)
 {
 	TAILQ_INSERT_TAIL(&rte_dpaa_bus.device_list, dev, next);
+}
+
+/* Reads the SEC device and ERA from DTS by using the of library
+ * Returns -1 if SEC devices not available, 0 otherwise
+ */
+static inline int
+dpaa_sec_available(void)
+{
+	const struct device_node *caam_node;
+
+	for_each_compatible_node(caam_node, NULL, "fsl,sec-v4.0") {
+		const uint32_t *prop = of_get_property(caam_node,
+				"fsl,sec-era",
+				NULL);
+		if (prop) {
+			rta_set_sec_era(INTL_SEC_ERA(rte_cpu_to_be_32(*prop)));
+		}
+		return 0;
+	}
+
+	return -1;
 }
 
 static void dpaa_clean_device_list(void);
@@ -130,6 +153,43 @@ dpaa_create_device_list(void)
 	}
 
 	rte_dpaa_bus.device_count = i;
+
+	/* Unlike case of ETH, 4 SEC devices are constantly created only if
+	 * "sec" property is found in the device tree. Logically there is no
+	 * limit (QI interfaces), but as max number of cores are 4 for DPAA1,
+	 * only 4 devices are being created.
+	 */
+
+	if (dpaa_sec_available()) {
+		PMD_DRV_LOG(INFO, "DPAA SEC devices are not available");
+		return 0;
+	}
+
+	/* Creating SEC Devices */
+	for (i = 0; i < FSL_DPAA_MAX_CRYPTO_DEV; i++) {
+		dev = rte_zmalloc(NULL, sizeof(struct rte_dpaa_device),
+				  RTE_CACHE_LINE_SIZE);
+		if (!dev) {
+			DPAA_BUS_LOG(ERR, "Failed to allocate SEC devices");
+			ret = -1;
+			goto cleanup;
+		}
+
+		dev->id.device_type = FSL_DPAA_CRYPTO;
+		dev->id.dev_id = rte_dpaa_bus.device_count + i;
+
+		/* Even though RTE_CRYPTODEV_NAME_MAX_LEN is valid length of
+		 * crypto PMD, using RTE_ETH_NAME_MAX_LEN as that is the size
+		 * allocated for dev->name/
+		 */
+		memset(dev->name, 0, RTE_ETH_NAME_MAX_LEN);
+		sprintf(dev->name, "dpaa-sec%d", i);
+		DPAA_BUS_LOG(DEBUG, "Device added: %s", dev->name);
+
+		dpaa_add_to_device_list(dev);
+	}
+
+	rte_dpaa_bus.device_count += i;
 
 	return 0;
 
