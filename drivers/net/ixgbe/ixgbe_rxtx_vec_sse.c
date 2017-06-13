@@ -681,5 +681,9 @@ ixgbe_txq_vec_setup(struct ixgbe_tx_queue *txq)
 int __attribute__((cold))
 ixgbe_rx_vec_dev_conf_condition_check(struct rte_eth_dev *dev)
 {
+	/* need SSE4.1 support */
+	if (!rte_cpu_get_flag_enabled(RTE_CPUFLAG_SSE4_1))
+		return -1;
+
 	return ixgbe_rx_vec_dev_conf_condition_check_default(dev);
 }
