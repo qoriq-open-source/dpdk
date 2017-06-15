@@ -1012,7 +1012,6 @@ priv_flow_create_action_queue_drop(struct priv *priv,
 	}
 	rte_flow->drop = 1;
 	rte_flow->ibv_attr = flow->ibv_attr;
-	rte_flow->qp = priv->flow_drop_queue->qp;
 	if (!priv->started)
 		return rte_flow;
 #ifdef HAVE_VERBS_IBV_EXP_FLOW_SPEC_ACTION_DROP
@@ -1024,6 +1023,7 @@ priv_flow_create_action_queue_drop(struct priv *priv,
 	++flow->ibv_attr->num_of_specs;
 	flow->offset += sizeof(struct ibv_exp_flow_spec_action_drop);
 #endif
+	rte_flow->qp = priv->flow_drop_queue->qp;
 	rte_flow->ibv_flow = ibv_exp_create_flow(rte_flow->qp,
 						 rte_flow->ibv_attr);
 	if (!rte_flow->ibv_flow) {
