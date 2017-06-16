@@ -122,6 +122,84 @@ rte_constant_bswap64(uint64_t x)
 		((x & 0xff00000000000000ULL) >> 56);
 }
 
+/*
+ * An internal function to swap bytes of a 48-bit value.
+ */
+static inline uint64_t
+rte_constant_bswap48(uint64_t x)
+{
+	return  ((x & 0x0000000000ffULL) << 40) |
+		((x & 0x00000000ff00ULL) << 24) |
+		((x & 0x000000ff0000ULL) <<  8) |
+		((x & 0x0000ff000000ULL) >>  8) |
+		((x & 0x00ff00000000ULL) >> 24) |
+		((x & 0xff0000000000ULL) >> 40);
+}
+
+/*
+ * An internal function to swap bytes of a 40-bit value.
+ */
+static inline uint64_t
+rte_constant_bswap40(uint64_t x)
+{
+	return  ((x & 0x00000000ffULL) << 32) |
+		((x & 0x000000ff00ULL) << 16) |
+		((x & 0x0000ff0000ULL)) |
+		((x & 0x00ff000000ULL) >> 16) |
+		((x & 0xff00000000ULL) >> 32);
+}
+
+/*
+ * An internal function to swap bytes of a 24-bit value.
+ */
+static inline uint32_t
+rte_constant_bswap24(uint32_t x)
+{
+	return  ((x & 0x0000ffULL) << 16) |
+		((x & 0x00ff00ULL)) |
+		((x & 0xff0000ULL) >> 16);
+}
+
+#define rte_bswap24 rte_constant_bswap24
+#define rte_bswap40 rte_constant_bswap40
+#define rte_bswap48 rte_constant_bswap48
+
+#if RTE_BYTE_ORDER == RTE_LITTLE_ENDIAN
+
+#define rte_cpu_to_le_24(x) (x)
+#define rte_cpu_to_le_40(x) (x)
+#define rte_cpu_to_le_48(x) (x)
+
+#define rte_cpu_to_be_24(x) rte_bswap24(x)
+#define rte_cpu_to_be_40(x) rte_bswap40(x)
+#define rte_cpu_to_be_48(x) rte_bswap48(x)
+
+#define rte_le_to_cpu_24(x) (x)
+#define rte_le_to_cpu_40(x) (x)
+#define rte_le_to_cpu_48(x) (x)
+
+#define rte_be_to_cpu_24(x) rte_bswap24(x)
+#define rte_be_to_cpu_40(x) rte_bswap40(x)
+#define rte_be_to_cpu_48(x) rte_bswap48(x)
+
+#else /* RTE_BIG_ENDIAN */
+
+#define rte_cpu_to_le_24(x) rte_bswap24(x)
+#define rte_cpu_to_le_40(x) rte_bswap40(x)
+#define rte_cpu_to_le_48(x) rte_bswap48(x)
+
+#define rte_cpu_to_be_24(x) (x)
+#define rte_cpu_to_be_40(x) (x)
+#define rte_cpu_to_be_48(x) (x)
+
+#define rte_le_to_cpu_24(x) rte_bswap24(x)
+#define rte_le_to_cpu_40(x) rte_bswap40(x)
+#define rte_le_to_cpu_48(x) rte_bswap48(x)
+
+#define rte_be_to_cpu_24(x) (x)
+#define rte_be_to_cpu_40(x) (x)
+#define rte_be_to_cpu_48(x) (x)
+#endif
 
 #ifdef __DOXYGEN__
 

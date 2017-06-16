@@ -85,6 +85,7 @@ enum rte_cryptodev_type {
 	RTE_CRYPTODEV_OPENSSL_PMD,    /**<  OpenSSL PMD */
 	RTE_CRYPTODEV_ARMV8_PMD,	/**< ARMv8 crypto PMD */
 	RTE_CRYPTODEV_SCHEDULER_PMD,	/**< Crypto Scheduler PMD */
+	RTE_CRYPTODEV_DPAA_SEC_PMD,    /**< NXP DPAA - SEC PMD */
 	RTE_CRYPTODEV_DPAA2_SEC_PMD,    /**< NXP DPAA2 - SEC PMD */
 };
 

@@ -115,6 +115,7 @@ _LDLIBS-$(CONFIG_RTE_LIBRTE_BNX2X_PMD)      += -lrte_pmd_bnx2x -lz
 _LDLIBS-$(CONFIG_RTE_LIBRTE_BNXT_PMD)       += -lrte_pmd_bnxt
 _LDLIBS-$(CONFIG_RTE_LIBRTE_PMD_BOND)       += -lrte_pmd_bond
 _LDLIBS-$(CONFIG_RTE_LIBRTE_CXGBE_PMD)      += -lrte_pmd_cxgbe
+_LDLIBS-$(CONFIG_RTE_LIBRTE_DPAA_PMD)       += -lrte_pmd_dpaa
 _LDLIBS-$(CONFIG_RTE_LIBRTE_DPAA2_PMD)      += -lrte_pmd_dpaa2
 _LDLIBS-$(CONFIG_RTE_LIBRTE_E1000_PMD)      += -lrte_pmd_e1000
 _LDLIBS-$(CONFIG_RTE_LIBRTE_ENA_PMD)        += -lrte_pmd_ena
@@ -165,6 +166,12 @@ _LDLIBS-$(CONFIG_RTE_LIBRTE_PMD_DPAA2_SEC)   += -lrte_pmd_dpaa2_sec
 _LDLIBS-$(CONFIG_RTE_LIBRTE_PMD_DPAA2_SEC)   += -lrte_mempool_dpaa2
 _LDLIBS-$(CONFIG_RTE_LIBRTE_PMD_DPAA2_SEC)   += -lrte_bus_fslmc
 endif # CONFIG_RTE_LIBRTE_FSLMC_BUS
+
+ifeq ($(CONFIG_RTE_LIBRTE_DPAA_BUS),y)
+_LDLIBS-$(CONFIG_RTE_LIBRTE_PMD_DPAA_SEC)   += -lrte_bus_dpaa
+_LDLIBS-$(CONFIG_RTE_LIBRTE_PMD_DPAA_SEC)   += -lrte_pmd_dpaa_sec
+endif # CONFIG_RTE_LIBRTE_DPAA_BUS
+
 endif # CONFIG_RTE_LIBRTE_CRYPTODEV
 
 ifeq ($(CONFIG_RTE_LIBRTE_EVENTDEV),y)
@@ -177,6 +184,11 @@ ifeq ($(CONFIG_RTE_LIBRTE_DPAA2_PMD),y)
 _LDLIBS-$(CONFIG_RTE_LIBRTE_DPAA2_PMD)      += -lrte_bus_fslmc
 _LDLIBS-$(CONFIG_RTE_LIBRTE_DPAA2_PMD)      += -lrte_mempool_dpaa2
 endif # CONFIG_RTE_LIBRTE_DPAA2_PMD
+
+ifeq ($(CONFIG_RTE_LIBRTE_DPAA_PMD),y)
+_LDLIBS-$(CONFIG_RTE_LIBRTE_DPAA_PMD)       += -lrte_bus_dpaa
+_LDLIBS-$(CONFIG_RTE_LIBRTE_DPAA_PMD)       += -lrte_mempool_dpaa
+endif
 
 endif # !CONFIG_RTE_BUILD_SHARED_LIBS
 
