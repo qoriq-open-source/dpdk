@@ -171,6 +171,7 @@ static void dpaa_eth_dev_info(struct rte_eth_dev *dev,
 
 	PMD_INIT_FUNC_TRACE();
 
+        dev_info->driver_name = dev->device->driver->name;
 	dev_info->max_rx_queues = dpaa_intf->nb_rx_queues;
 	dev_info->max_tx_queues = dpaa_intf->nb_tx_queues;
 	dev_info->min_rx_bufsize = DPAA_MIN_RX_BUF_SIZE;
@@ -788,7 +789,7 @@ static int dpaa_eth_dev_init(struct rte_eth_dev *eth_dev)
 }
 
 static int
-rte_dpaa_probe(struct rte_dpaa_driver *dpaa_drv __rte_unused,
+rte_dpaa_probe(struct rte_dpaa_driver *dpaa_drv,
 			   struct rte_dpaa_device *dpaa_dev)
 {
 	int diag;
@@ -842,6 +843,7 @@ rte_dpaa_probe(struct rte_dpaa_driver *dpaa_drv __rte_unused,
 	}
 
 	eth_dev->device = &dpaa_dev->device;
+        eth_dev->device->driver = &dpaa_drv->driver;
 	dpaa_dev->eth_dev = eth_dev;
 	eth_dev->data->rx_mbuf_alloc_failed = 0;
 

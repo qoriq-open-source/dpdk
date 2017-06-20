@@ -296,7 +296,7 @@ static inline void dpaa_checksum_offload(struct rte_mbuf *mbuf,
 	fd->cmd = DPAA_FD_CMD_RPD | DPAA_FD_CMD_DTC;
 }
 
-struct rte_mbuf *dpaa_eth_sg_to_mbuf(struct qm_fd *fd, uint32_t ifid)
+static struct rte_mbuf *dpaa_eth_sg_to_mbuf(struct qm_fd *fd, uint32_t ifid)
 {
 	struct pool_info_entry *bp_info = DPAA_BPID_TO_POOL_INFO(fd->bpid);
 	struct rte_mbuf *first_seg, *prev_seg, *cur_seg, *temp;
@@ -475,7 +475,7 @@ static struct rte_mbuf *dpaa_get_dmable_mbuf(struct rte_mbuf *mbuf,
 	return dpaa_mbuf;
 }
 
-int dpaa_eth_mbuf_to_sg_fd(struct rte_mbuf *mbuf,
+static int dpaa_eth_mbuf_to_sg_fd(struct rte_mbuf *mbuf,
 		struct qm_fd *fd,
 		uint32_t bpid)
 {
