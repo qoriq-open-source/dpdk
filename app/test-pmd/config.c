@@ -3048,6 +3048,9 @@ set_queue_rate_limit(portid_t port_id, uint16_t queue_idx, uint16_t rate)
 int
 set_vf_rate_limit(portid_t port_id, uint16_t vf, uint16_t rate, uint64_t q_msk)
 {
+        (void)vf;
+	(void)rate;
+	(void)q_msk;
 	int diag = -ENOTSUP;
 
 #ifdef RTE_LIBRTE_IXGBE_PMD

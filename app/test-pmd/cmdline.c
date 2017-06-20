@@ -6826,7 +6826,6 @@ cmd_set_vf_rxmode_parsed(void *parsed_result,
 	uint16_t rx_mode = 0;
 	struct cmd_set_vf_rxmode *res = parsed_result;
 
-	int is_on = (strcmp(res->on, "on") == 0) ? 1 : 0;
 	if (!strcmp(res->what,"rxmode")) {
 		if (!strcmp(res->mode, "AUPE"))
 			rx_mode |= ETH_VMDQ_ACCEPT_UNTAG;
@@ -6839,11 +6838,13 @@ cmd_set_vf_rxmode_parsed(void *parsed_result,
 	}
 
 #ifdef RTE_LIBRTE_IXGBE_PMD
+	int is_on = (strcmp(res->on, "on") == 0) ? 1 : 0;
 	if (ret == -ENOTSUP)
 		ret = rte_pmd_ixgbe_set_vf_rxmode(res->port_id, res->vf_id,
 						  rx_mode, (uint8_t)is_on);
 #endif
 #ifdef RTE_LIBRTE_BNXT_PMD
+	int is_on = (strcmp(res->on, "on") == 0) ? 1 : 0;
 	if (ret == -ENOTSUP)
 		ret = rte_pmd_bnxt_set_vf_rxmode(res->port_id, res->vf_id,
 						 rx_mode, (uint8_t)is_on);
