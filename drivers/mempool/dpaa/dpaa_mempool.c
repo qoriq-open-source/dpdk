@@ -44,7 +44,9 @@ dpaa_mbuf_create_pool(struct rte_mempool *mp)
 	struct bm_buffer bufs[8];
 	struct dpaa_bp_info *bp_info;
 	uint8_t bpid;
-	int num_bufs = 0, ret = 0;
+	int num_bufs = 0, ret = 0, loop;
+	struct fm_eth_port_cfg *cfg;
+	struct fman_if *fman_intf;
 	struct bman_pool_params params = {
 		.flags = BMAN_POOL_FLAG_DYNAMIC_BPID
 	};
@@ -60,6 +62,27 @@ dpaa_mbuf_create_pool(struct rte_mempool *mp)
 			return -1;
 		}
 	}
+
+	for (loop = 0; loop < dpaa_netcfg->num_ethports; loop++) {
+		cfg = &dpaa_netcfg->port_cfg[loop];
+		fman_intf = cfg->fman_if;
+		/* For shared MAC, the exact bpid must be used.
+		 * The other partition (kernel) is aware of the bpid.
+		 */
+		if (fman_intf->is_shared_mac) {
+			struct fman_if_bpool *fm_if_bp;
+			memset(&params, 0, sizeof(params));
+			/* There is only one buffer pool for shared mac.
+			 * No overwrite is performed
+			 */
+			list_for_each_entry(fm_if_bp, &fman_intf->bpool_list,
+					   node) {
+				params.bpid = fm_if_bp->bpid;
+				params.flags = 0;
+			}
+		}
+	}
+
 	bp = bman_new_pool(&params);
 	if (!bp) {
 		DPAA_MEMPOOL_ERR("bman_new_pool() failed");

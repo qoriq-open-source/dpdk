@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0)
  *
  * Copyright 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright 2019 NXP
  * All rights reserved.
  *
  */
@@ -313,10 +314,12 @@ struct fman_if {
 	uint8_t is_rgmii;
 	/* The index of this MAC (within the Fman it belongs to) */
 	uint8_t mac_idx;
-	/* The MAC address */
-	struct ether_addr mac_addr;
+	/* Shared MAC with kernel*/
+	uint8_t is_shared_mac;
 	/* The Qman channel to schedule Tx FQs to */
 	u16 tx_channel_id;
+	/* The MAC address */
+	struct ether_addr mac_addr;
 	/* The hard-coded FQIDs for this interface. Note: this doesn't cover
 	 * the PCD nor the "Rx default" FQIDs, which are configured via FMC
 	 * and its XML-based configuration.

@@ -167,12 +167,15 @@ fman_if_init(const struct device_node *dpa_node)
 	const char *mname, *fname;
 	const char *dname = dpa_node->full_name;
 	size_t lenp;
-	int _errno;
+	int _errno, is_shared = 0;
 	const char *char_prop;
 	uint32_t na;
 
 	if (of_device_is_available(dpa_node) == false)
 		return 0;
+
+	if (of_device_is_compatible(dpa_node, "fsl,dpa-ethernet-shared"))
+		is_shared = 1;
 
 	rprop = "fsl,qman-frame-queues-rx";
 	mprop = "fsl,fman-mac";
@@ -187,6 +190,11 @@ fman_if_init(const struct device_node *dpa_node)
 	INIT_LIST_HEAD(&__if->__if.bpool_list);
 	strlcpy(__if->node_path, dpa_node->full_name, PATH_MAX - 1);
 	__if->node_path[PATH_MAX - 1] = '\0';
+
+	if (is_shared)
+		__if->__if.is_shared_mac = 1;
+	else
+		__if->__if.is_shared_mac = 0;
 
 	/* Obtain the MAC node used by this interface except macless */
 	mac_phandle = of_get_property(dpa_node, mprop, &lenp);
@@ -405,6 +413,7 @@ fman_if_init(const struct device_node *dpa_node)
 	}
 
 	assert(lenp == (4 * sizeof(phandle)));
+
 	/*TODO: Fix for other cases also */
 	na = of_n_addr_cells(mac_node);
 	/* Get rid of endianness (issues). Convert to host byte order */
@@ -539,6 +548,15 @@ fman_init(void)
 		_errno = fman_if_init(dpa_node);
 		if (_errno) {
 			FMAN_ERR(_errno, "if_init(%s)\n", dpa_node->full_name);
+			goto err;
+		}
+	}
+
+	for_each_compatible_node(dpa_node, NULL, "fsl,dpa-ethernet-shared") {
+		_errno = fman_if_init(dpa_node);
+		if (_errno) {
+			FMAN_ERR(_errno, "if_init(%s) shared interface\n",
+				 dpa_node->full_name);
 			goto err;
 		}
 	}
