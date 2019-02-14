@@ -37,6 +37,24 @@ struct dpaa_memseg_list rte_dpaa_memsegs
 
 struct dpaa_bp_info *rte_dpaa_bpid_info = NULL;
 
+static void check_shared_bpid(struct rte_mempool *mp, void *userdata)
+{
+	struct dpaa_bp_info *bp_info;
+	struct bman_pool_params *params;
+
+	bp_info = (struct dpaa_bp_info *)mp->pool_data;
+	params = (struct bman_pool_params *)userdata;
+
+	/* In case of shared mac, we set bpool params to take a dynamic bpid,
+	 * if a new pool is created in a secondary process.
+	 * The secondary process will also see the shared mac, that's why we
+	 * need to use a different pool for the secondary process.
+	 */
+	if (bp_info && (bp_info->bpid == params->bpid)) {
+		params->flags |= BMAN_POOL_FLAG_DYNAMIC_BPID;
+	}
+}
+
 static int
 dpaa_mbuf_create_pool(struct rte_mempool *mp)
 {
@@ -82,6 +100,12 @@ dpaa_mbuf_create_pool(struct rte_mempool *mp)
 			}
 		}
 	}
+	/* In case of shared mac the bpid is taken from the fman port
+	 * and used when a mempool is created. If another process tries to
+	 * create a mempool, we iterate through existing mempools to make sure
+	 * that we do not use the shared mac bpid once again.
+	 */
+	rte_mempool_walk(check_shared_bpid, &params);
 
 	bp = bman_new_pool(&params);
 	if (!bp) {
