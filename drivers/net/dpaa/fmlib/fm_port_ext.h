@@ -1301,6 +1301,17 @@ typedef struct t_FmPortParams {
 				be passed by the driver upon calling the above callbacks */
 } t_FmPortParams;
 
+#if (DPAA_VERSION >= 11)
+typedef struct t_FmPortVSPAllocParams {
+    uint8_t     numOfProfiles;          /**< Number of Virtual Storage Profiles; must be a power of 2 */
+    uint8_t     dfltRelativeId;         /**< The default Virtual-Storage-Profile-id dedicated to Rx/OP port
+                                             The same default Virtual-Storage-Profile-id will be for coupled Tx port
+                                             if relevant function called for Rx port */
+    t_Handle    h_FmTxPort;             /**< Handle to coupled Tx Port; not relevant for OP port. */
+} t_FmPortVSPAllocParams;
+#endif /* (DPAA_VERSION >= 11) */
+
+
 /**************************************************************************//**
  @Function	FM_PORT_Config
 
@@ -3230,7 +3241,7 @@ uint32_t FM_PORT_PcdPlcrFreeProfiles(t_Handle h_FmPort);
  @Cautions	Allowed only following FM_PORT_Init(), and before FM_PORT_SetPCD()
 		and also before FM_PORT_Enable(); i.e. the port should be disabled.
 *//***************************************************************************/
-uint32_t FM_PORT_VSPAlloc(t_Handle h_FmPort, ioc_fm_port_vsp_alloc_params_t *p_Params);
+uint32_t FM_PORT_VSPAlloc(t_Handle h_FmPort, t_FmPortVSPAllocParams *p_Params);
 #endif /* (DPAA_VERSION >= 11) */
 
 /**************************************************************************//**

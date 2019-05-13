@@ -16,6 +16,7 @@
 #include "fm_ext.h"
 #include "fm_pcd_ext.h"
 #include "fm_port_ext.h"
+#include "fm_vsp_ext.h"
 #include <rte_dpaa_logs.h>
 
 #define MODULE_FM		0x00010000
@@ -111,7 +112,7 @@ void FM_Close(t_Handle h_Fm)
 
 uint32_t  FM_GetApiVersion(t_Handle h_Fm, ioc_fm_api_version_t *p_version)
 {
-	t_Device			*p_Dev = (t_Device *)h_Fm;
+	t_Device *p_Dev = (t_Device *)h_Fm;
 	int ret;
 
 	_fml_dbg("Calling...\n");
@@ -146,6 +147,7 @@ t_Handle FM_PCD_Open(t_FmPcdParams *p_FmPcdParams)
 	memset(devName, 0, 20);
 	sprintf(devName, "%s%s%u-pcd", "/dev/", DEV_FM_NAME,
 		(uint32_t)((t_Device *)p_FmPcdParams->h_Fm)->id);
+
 	fd = open(devName, O_RDWR);
 	if (fd < 0) {
 		free(p_Dev);
@@ -567,6 +569,197 @@ t_Handle GetDeviceId(t_Handle h_Dev)
 
 	return (t_Handle)p_Dev->id;
 }
+
+#if (DPAA_VERSION >= 11)
+
+uint32_t FM_PORT_VSPAlloc(t_Handle h_FmPort, t_FmPortVSPAllocParams *p_Params)
+{
+	t_Device    *p_Dev = (t_Device*) h_FmPort;
+
+	_fml_dbg("Calling...\n");
+
+	if (ioctl(p_Dev->fd, FM_PORT_IOC_VSP_ALLOC, p_Params))
+		RETURN_ERROR(MINOR, E_INVALID_OPERATION, NO_MSG);
+
+	_fml_dbg("Called.\n");
+
+	return E_OK;
+}
+
+t_Handle FM_VSP_Config(t_FmVspParams *p_FmVspParams)
+{
+	t_Device *p_Dev = NULL;
+	t_Device *p_VspDev = NULL;
+	ioc_fm_vsp_params_t param;
+
+	p_Dev = p_FmVspParams->h_Fm;
+
+	_fml_dbg("Performing VSP Configuration...\n");
+
+	memcpy(&param, p_FmVspParams, sizeof(param));
+	param.p_fm = UINT_TO_PTR(p_Dev->id);
+	param.id = NULL;
+
+	if (ioctl(p_Dev->fd, FM_IOC_VSP_CONFIG, &param))
+	{
+		DPAA_PMD_ERR("FM_VSP_Config ioctl error\n");
+		return NULL;
+	}
+
+	p_VspDev = (t_Device *)malloc(sizeof(t_Device));
+	if (!p_VspDev)
+	{
+		DPAA_PMD_ERR("FM VSP Params!\n");
+		return NULL;
+	}
+	memset(p_VspDev, 0, sizeof(t_Device));
+	p_VspDev->h_UserPriv = (t_Handle)p_Dev;
+	p_Dev->owners++;
+	p_VspDev->id = PTR_TO_UINT(param.id);
+
+	_fml_dbg("VSP Configuration completed\n");
+
+	return (t_Handle)p_VspDev;
+}
+
+uint32_t FM_VSP_Init(t_Handle h_FmVsp)
+{
+	t_Device *p_Dev = NULL;
+	t_Device *p_VspDev = (t_Device *)h_FmVsp;
+	ioc_fm_obj_t id;
+
+	_fml_dbg("Calling...\n");
+
+	p_Dev = (t_Device*)p_VspDev->h_UserPriv;
+	id.obj = UINT_TO_PTR(p_VspDev->id);
+
+	if (ioctl(p_Dev->fd, FM_IOC_VSP_INIT, &id)) {
+		DPAA_PMD_ERR("FM_VSP_Init ioctl error\n");
+		RETURN_ERROR(MINOR, E_INVALID_OPERATION, NO_MSG);
+	}
+
+	_fml_dbg("Called.\n");
+
+	return E_OK;
+}
+
+uint32_t FM_VSP_Free(t_Handle h_FmVsp)
+{
+	t_Device *p_Dev = NULL;
+	t_Device *p_VspDev = (t_Device *)h_FmVsp;
+	ioc_fm_obj_t id;
+
+	_fml_dbg("Calling...\n");
+
+	p_Dev = (t_Device*)p_VspDev->h_UserPriv;
+	id.obj = UINT_TO_PTR(p_VspDev->id);
+
+	if (ioctl(p_Dev->fd, FM_IOC_VSP_FREE, &id)) {
+		DPAA_PMD_ERR("FM_VSP_Free ioctl error\n");
+		RETURN_ERROR(MINOR, E_INVALID_OPERATION, NO_MSG);
+	}
+
+	p_Dev->owners--;
+	free(p_VspDev);
+
+	_fml_dbg("Called.\n");
+
+	return E_OK;
+}
+
+uint32_t FM_VSP_ConfigPoolDepletion(t_Handle h_FmVsp, t_FmBufPoolDepletion *p_BufPoolDepletion)
+{
+	t_Device *p_Dev = NULL;
+	t_Device *p_VspDev = (t_Device *)h_FmVsp;
+	ioc_fm_buf_pool_depletion_params_t params;
+
+	_fml_dbg("Calling...\n");
+
+	p_Dev = (t_Device*)p_VspDev->h_UserPriv;
+	params.p_fm_vsp = UINT_TO_PTR(p_VspDev->id);
+	memcpy(&params.fm_buf_pool_depletion, p_BufPoolDepletion, sizeof(*p_BufPoolDepletion));
+
+	if (ioctl(p_Dev->fd, FM_IOC_VSP_CONFIG_POOL_DEPLETION, &params)) {
+		DPAA_PMD_ERR("FM_VSP_ConfigPoolDepletion ioctl error\n");
+		RETURN_ERROR(MINOR, E_INVALID_OPERATION, NO_MSG);
+	}
+
+	_fml_dbg("Called.\n");
+
+	return E_OK;
+}
+
+uint32_t FM_VSP_ConfigBufferPrefixContent(
+		t_Handle h_FmVsp,
+		t_FmBufferPrefixContent *p_FmBufferPrefixContent)
+{
+	t_Device *p_Dev = NULL;
+	t_Device *p_VspDev = (t_Device *)h_FmVsp;
+	ioc_fm_buffer_prefix_content_params_t params;
+
+	_fml_dbg("Calling...\n");
+
+	p_Dev = (t_Device*)p_VspDev->h_UserPriv;
+	params.p_fm_vsp = UINT_TO_PTR(p_VspDev->id);
+	memcpy(&params.fm_buffer_prefix_content, p_FmBufferPrefixContent,
+	       sizeof(*p_FmBufferPrefixContent));
+
+	if (ioctl(p_Dev->fd, FM_IOC_VSP_CONFIG_BUFFER_PREFIX_CONTENT,
+		  &params)) {
+		DPAA_PMD_ERR("FM_VSP_ConfigBufferPrefixContent ioctl error\n");
+		RETURN_ERROR(MINOR, E_INVALID_OPERATION, NO_MSG);
+	}
+
+    _fml_dbg("Called.\n");
+
+    return E_OK;
+}
+
+uint32_t FM_VSP_ConfigNoScatherGather(t_Handle h_FmVsp, bool noScatherGather)
+{
+	t_Device *p_Dev = NULL;
+	t_Device *p_VspDev = (t_Device *)h_FmVsp;
+	ioc_fm_vsp_config_no_sg_params_t params;
+
+	_fml_dbg("Calling...\n");
+
+	p_Dev = (t_Device*)p_VspDev->h_UserPriv;
+	params.p_fm_vsp = UINT_TO_PTR(p_VspDev->id);
+	params.no_sg = noScatherGather;
+
+	if (ioctl(p_Dev->fd, FM_IOC_VSP_CONFIG_NO_SG, &params)) {
+		DPAA_PMD_ERR("FM_VSP_ConfigNoScatherGather ioctl error\n");
+		RETURN_ERROR(MINOR, E_INVALID_OPERATION, NO_MSG);
+	}
+
+	_fml_dbg("Called.\n");
+
+	return E_OK;
+}
+
+t_FmPrsResult * FM_VSP_GetBufferPrsResult(t_Handle h_FmVsp, char *p_Data)
+{
+	t_Device *p_Dev = NULL;
+	t_Device *p_VspDev = (t_Device *)h_FmVsp;
+	ioc_fm_vsp_prs_result_params_t params;
+
+	_fml_dbg("Calling...\n");
+
+	p_Dev = (t_Device*)p_VspDev->h_UserPriv;
+	params.p_fm_vsp = UINT_TO_PTR(p_VspDev->id);
+	params.p_data = p_Data;
+
+	if (ioctl(p_Dev->fd, FM_IOC_VSP_GET_BUFFER_PRS_RESULT, &params))
+	{
+		DPAA_PMD_ERR("FM_VSP_GetBufferPrsResult ioctl error\n");
+		return NULL;
+	}
+
+	_fml_dbg("Called.\n");
+
+	return params.p_data;
+}
+#endif
 
 #if defined FMAN_V3H
 void Platform_is_FMAN_V3H(void)

@@ -3,6 +3,7 @@
 
 include $(RTE_SDK)/mk/rte.vars.mk
 RTE_BUS_DPAA=$(RTE_SDK)/drivers/bus/dpaa
+RTE_SDK_DPAA=$(RTE_SDK)/drivers/net/dpaa
 
 #
 # library name
@@ -16,6 +17,10 @@ CFLAGS += -Wno-pointer-arith
 CFLAGS += -Wno-cast-qual
 CFLAGS += -I$(RTE_BUS_DPAA)/
 CFLAGS += -I$(RTE_BUS_DPAA)/include
+
+CFLAGS += -I$(RTE_SDK_DPAA)/fmlib
+CFLAGS += -I$(RTE_SDK)/drivers/mempool/dpaa
+
 CFLAGS += -I$(RTE_BUS_DPAA)/base/qbman
 CFLAGS += -I$(RTE_SDK)/lib/librte_eal/linuxapp/eal
 CFLAGS += -I$(RTE_SDK)/lib/librte_eal/common/include
@@ -31,6 +36,7 @@ SRCS-$(CONFIG_RTE_LIBRTE_DPAA_BUS) += \
 	dpaa_bus.c
 
 SRCS-$(CONFIG_RTE_LIBRTE_DPAA_BUS) += \
+	base/fman/vsp.c \
 	base/fman/fman.c \
 	base/fman/fman_hw.c \
 	base/fman/of.c \

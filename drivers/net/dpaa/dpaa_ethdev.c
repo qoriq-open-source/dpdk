@@ -45,7 +45,7 @@
 #include <fsl_qman.h>
 #include <fsl_bman.h>
 #include <fsl_fman.h>
-
+#include <vsp.h>
 /* Supported Rx offloads */
 static uint64_t dev_rx_offloads_sup =
 		DEV_RX_OFFLOAD_JUMBO_FRAME |
@@ -637,6 +637,10 @@ int dpaa_eth_rx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx,
 		DPAA_PMD_DEBUG("if:%s fd_offset = %d offset = %d",
 				dpaa_intf->name, fd_offset,
 				fman_if_get_fdoff(dpaa_intf->fif));
+
+		if(dpaa_intf->fif->is_shared_mac) {
+			vsp_init(dpaa_intf->fif, dpaa_intf->bp_info);
+		}
 	}
 	DPAA_PMD_DEBUG("if:%s sg_on = %d, max_frm =%d", dpaa_intf->name,
 		fman_if_get_sg_enable(dpaa_intf->fif),
@@ -1693,6 +1697,18 @@ rte_dpaa_remove(struct rte_dpaa_device *dpaa_dev)
 
 static void __attribute__((destructor(102))) dpaa_finish(void)
 {
+	unsigned i;
+	/* clean the storage profiles for shared mac*/
+	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
+		if (rte_eth_devices[i].dev_ops == &dpaa_devops) {
+			struct dpaa_if *dpaa_intf =
+				rte_eth_devices[i].data->dev_private;
+			if (dpaa_intf->fif->is_shared_mac) {
+				vsp_clean();
+			}
+		}
+	}
+
 	if (!(default_q || fmc_q)) {
 		unsigned i;
 
@@ -1704,6 +1720,10 @@ static void __attribute__((destructor(102))) dpaa_finish(void)
 					if (dpaa_fm_deconfig(dpaa_intf))
 						DPAA_PMD_WARN("DPAA FM "
 							"deconfig failed\n");
+
+				if (dpaa_intf->fif->is_shared_mac) {
+					vsp_clean();
+				}
 			}
 		}
 		if (is_global_init)

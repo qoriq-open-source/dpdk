@@ -318,6 +318,10 @@ struct fman_if {
 	uint8_t is_shared_mac;
 	/* The Qman channel to schedule Tx FQs to */
 	u16 tx_channel_id;
+	/* number of storage profiles */
+	int num_profiles;
+	/* base profile */
+	int base_profile_id;
 	/* The MAC address */
 	struct ether_addr mac_addr;
 	/* The hard-coded FQIDs for this interface. Note: this doesn't cover

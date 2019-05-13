@@ -191,10 +191,20 @@ fman_if_init(const struct device_node *dpa_node)
 	strlcpy(__if->node_path, dpa_node->full_name, PATH_MAX - 1);
 	__if->node_path[PATH_MAX - 1] = '\0';
 
-	if (is_shared)
+
+	if (is_shared) {
 		__if->__if.is_shared_mac = 1;
-	else
-		__if->__if.is_shared_mac = 0;
+		const struct device_node *dev;
+		for_each_compatible_node(dev, NULL, "fsl,fman-port-1g-rx-extended-args") {
+			size_t lenp;
+			const phandle *prop = of_get_property(dev, "vsp-window", &lenp);
+			if (prop) {
+				__if->__if.num_profiles = of_read_number(&prop[0], 1);
+				__if->__if.base_profile_id = of_read_number(&prop[1], 1);
+			}
+		}
+	}
+
 
 	/* Obtain the MAC node used by this interface except macless */
 	mac_phandle = of_get_property(dpa_node, mprop, &lenp);
@@ -391,8 +401,11 @@ fman_if_init(const struct device_node *dpa_node)
 		goto err;
 	}
 
-	assert(lenp == (4 * sizeof(phandle)));
-
+	if (is_shared) {
+		assert(lenp == (6 * sizeof(phandle)));
+	} else {
+		assert(lenp == (4 * sizeof(phandle)));
+	}
 	na = of_n_addr_cells(mac_node);
 	/* Get rid of endianness (issues). Convert to host byte order */
 	rx_phandle_host[0] = of_read_number(&rx_phandle[0], na);
@@ -412,8 +425,11 @@ fman_if_init(const struct device_node *dpa_node)
 		goto err;
 	}
 
-	assert(lenp == (4 * sizeof(phandle)));
-
+	if (is_shared) {
+		assert(lenp == (6 * sizeof(phandle)));
+	} else {
+		assert(lenp == (4 * sizeof(phandle)));
+	}
 	/*TODO: Fix for other cases also */
 	na = of_n_addr_cells(mac_node);
 	/* Get rid of endianness (issues). Convert to host byte order */

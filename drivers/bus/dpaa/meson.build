@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright 2018 NXP
+# Copyright 2018,2019 NXP
 
 version = 2
 
@@ -8,7 +8,8 @@ if host_machine.system() != 'linux'
 endif
 
 deps += ['common_dpaax', 'eventdev']
-sources = files('base/fman/fman.c',
+sources = files('base/fman/vsp.c',
+		'base/fman/fman.c',
 		'base/fman/fman_hw.c',
 		'base/fman/netcfg_layer.c',
 		'base/fman/of.c',
