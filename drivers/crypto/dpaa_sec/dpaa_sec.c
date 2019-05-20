@@ -1764,9 +1764,13 @@ dpaa_sec_enqueue_burst(void *qp, struct rte_crypto_op **ops,
 			 */
 			if (is_proto_pdcp(ses) && ses->pdcp.hfn_ovd) {
 				fd->cmd = 0x80000000 |
-					*((uint32_t *)(op->sym + 1));
-				DPAA_SEC_DP_DEBUG("Per packet HFN: %x\n",
-					*((uint32_t *)(op->sym + 1)));
+					*((uint32_t *)((uint8_t *)op +
+					ses->pdcp.hfn_ovd_offset));
+				DPAA_SEC_DP_DEBUG("Per packet HFN: %x, ovd:%u,%u\n",
+					*((uint32_t *)((uint8_t *)op +
+					ses->pdcp.hfn_ovd_offset)),
+					ses->pdcp.hfn_ovd,
+					is_proto_pdcp(ses));
 			}
 
 		}
@@ -2400,6 +2404,7 @@ dpaa_sec_set_pdcp_session(struct rte_cryptodev *dev,
 	session->pdcp.hfn = pdcp_xform->hfn;
 	session->pdcp.hfn_threshold = pdcp_xform->hfn_threshold;
 	session->pdcp.hfn_ovd = pdcp_xform->hfn_ovrd;
+	session->pdcp.hfn_ovd_offset = cipher_xform->iv.offset;
 
 	session->ctx_pool = dev_priv->ctx_pool;
 	rte_spinlock_lock(&dev_priv->lock);

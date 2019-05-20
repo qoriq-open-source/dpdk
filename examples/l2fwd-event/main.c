@@ -147,17 +147,10 @@ struct l2fwd_crypto_options {
 	unsigned ckey_param;
 	int ckey_random_size;
 
-	struct l2fwd_iv cipher_iv;
-	unsigned int cipher_iv_param;
-	int cipher_iv_random_size;
-
 	struct rte_crypto_sym_xform auth_xform;
 	uint8_t akey_param;
 	int akey_random_size;
 
-	struct l2fwd_iv auth_iv;
-	unsigned int auth_iv_param;
-	int auth_iv_random_size;
 	int digest_size;
 
 	enum rte_security_session_action_type action_type;
@@ -181,8 +174,6 @@ struct l2fwd_crypto_params {
 	unsigned digest_length;
 	unsigned block_size;
 
-	struct l2fwd_iv cipher_iv;
-	struct l2fwd_iv auth_iv;
 	struct rte_security_session *pdcp_sess;
 
 	enum rte_crypto_cipher_algorithm cipher_algo;
@@ -425,6 +416,7 @@ l2fwd_main_loop(struct l2fwd_crypto_options *options)
 			.sn_size = options->pdcp_xform.sn_size,
 			.hfn = options->pdcp_xform.hfn,
 			.hfn_threshold = options->pdcp_xform.hfn_threshold,
+			.hfn_ovrd = options->pdcp_xform.hfn_ovrd,
 		} },
 		.crypto_xform = &options->cipher_xform
 	};
@@ -489,15 +481,11 @@ l2fwd_crypto_usage(const char *prgname)
 		"  --cipher_op ENCRYPT / DECRYPT\n"
 		"  --cipher_key KEY (bytes separated with \":\")\n"
 		"  --cipher_key_random_size SIZE: size of cipher key when generated randomly\n"
-		"  --cipher_iv IV (bytes separated with \":\")\n"
-		"  --cipher_iv_random_size SIZE: size of cipher IV when generated randomly\n"
 
 		"  --auth_algo ALGO\n"
 		"  --auth_op GENERATE / VERIFY\n"
 		"  --auth_key KEY (bytes separated with \":\")\n"
 		"  --auth_key_random_size SIZE: size of auth key when generated randomly\n"
-		"  --auth_iv IV (bytes separated with \":\")\n"
-		"  --auth_iv_random_size SIZE: size of auth IV when generated randomly\n"
 
 		"  --digest_size SIZE: size of digest to be generated/verified\n"
 		"  --pdcp_sn_bits SN_SIZE: sn_size can be 5/7/12/15/18\n"
@@ -715,19 +703,6 @@ l2fwd_crypto_parse_args_long_options(struct l2fwd_crypto_options *options,
 	else if (strcmp(lgopts[option_index].name, "pdcp_domain") == 0)
 		return parse_pdcp_domain(&options->pdcp_xform.domain, optarg);
 
-	else if (strcmp(lgopts[option_index].name, "cipher_iv") == 0) {
-		options->cipher_iv_param = 1;
-		options->cipher_iv.length =
-			parse_bytes(options->cipher_iv.data, optarg, MAX_IV_SIZE);
-		if (options->cipher_iv.length > 0)
-			return 0;
-		else
-			return -1;
-	}
-
-	else if (strcmp(lgopts[option_index].name, "cipher_iv_random_size") == 0)
-		return parse_size(&options->cipher_iv_random_size, optarg);
-
 	/* Authentication options */
 	else if (strcmp(lgopts[option_index].name, "auth_algo") == 0) {
 		return parse_auth_algo(&options->auth_xform.auth.algo,
@@ -752,19 +727,6 @@ l2fwd_crypto_parse_args_long_options(struct l2fwd_crypto_options *options,
 	else if (strcmp(lgopts[option_index].name, "auth_key_random_size") == 0) {
 		return parse_size(&options->akey_random_size, optarg);
 	}
-
-	else if (strcmp(lgopts[option_index].name, "auth_iv") == 0) {
-		options->auth_iv_param = 1;
-		options->auth_iv.length =
-			parse_bytes(options->auth_iv.data, optarg, MAX_IV_SIZE);
-		if (options->auth_iv.length > 0)
-			return 0;
-		else
-			return -1;
-	}
-
-	else if (strcmp(lgopts[option_index].name, "auth_iv_random_size") == 0)
-		return parse_size(&options->auth_iv_random_size, optarg);
 
 	else if (strcmp(lgopts[option_index].name, "cryptodev_mask") == 0)
 		return parse_cryptodev_mask(options, optarg);
@@ -843,12 +805,14 @@ l2fwd_crypto_default_options(struct l2fwd_crypto_options *options)
 	/* Cipher Data */
 	options->cipher_xform.type = RTE_CRYPTO_SYM_XFORM_CIPHER;
 	options->cipher_xform.next = &options->auth_xform;
+	/* Per packet HFN which is used for IV generation in PDCP,
+	 * is stored in place of IV. Max HFN can be of size 25bits,
+	 * so reserving 4 bytes */
+	options->cipher_xform.cipher.iv.offset = IV_OFFSET;
+	options->cipher_xform.cipher.iv.length = 4;
 	options->ckey_param = 0;
 	options->ckey_random_size = -1;
 	options->cipher_xform.cipher.key.length = 16;
-	options->cipher_iv_param = 0;
-	options->cipher_iv_random_size = -1;
-	options->cipher_iv.length = 0;
 
 	options->cipher_xform.cipher.algo = RTE_CRYPTO_CIPHER_NULL;
 	options->cipher_xform.cipher.op = RTE_CRYPTO_CIPHER_OP_ENCRYPT;
@@ -859,9 +823,6 @@ l2fwd_crypto_default_options(struct l2fwd_crypto_options *options)
 	options->akey_param = 0;
 	options->akey_random_size = -1;
 	options->auth_xform.auth.key.length = 16;
-	options->auth_iv_param = 0;
-	options->auth_iv_random_size = -1;
-	options->auth_iv.length = 0;
 
 	options->auth_xform.auth.algo = RTE_CRYPTO_AUTH_NULL;
 	options->auth_xform.auth.op = RTE_CRYPTO_AUTH_OP_GENERATE;
@@ -878,7 +839,6 @@ display_cipher_info(struct l2fwd_crypto_options *options)
 	rte_hexdump(stdout, "Cipher key:",
 			options->cipher_xform.cipher.key.data,
 			options->cipher_xform.cipher.key.length);
-	rte_hexdump(stdout, "IV:", options->cipher_iv.data, options->cipher_iv.length);
 }
 
 static void
@@ -890,7 +850,6 @@ display_auth_info(struct l2fwd_crypto_options *options)
 	rte_hexdump(stdout, "Auth key:",
 			options->auth_xform.auth.key.data,
 			options->auth_xform.auth.key.length);
-	rte_hexdump(stdout, "IV:", options->auth_iv.data, options->auth_iv.length);
 }
 
 static void
@@ -936,8 +895,6 @@ l2fwd_crypto_parse_args(struct l2fwd_crypto_options *options,
 	char **argvopt = argv, *prgname = argv[0];
 
 	static struct option lgopts[] = {
-			{ "sessionless", no_argument, 0, 0 },
-
 			{ "cdev_type", required_argument, 0, 0 },
 			{ "chain", required_argument, 0, 0 },
 
@@ -945,33 +902,16 @@ l2fwd_crypto_parse_args(struct l2fwd_crypto_options *options,
 			{ "cipher_op", required_argument, 0, 0 },
 			{ "cipher_key", required_argument, 0, 0 },
 			{ "cipher_key_random_size", required_argument, 0, 0 },
-			{ "cipher_iv", required_argument, 0, 0 },
-			{ "cipher_iv_random_size", required_argument, 0, 0 },
 
 			{ "auth_algo", required_argument, 0, 0 },
 			{ "auth_op", required_argument, 0, 0 },
 			{ "auth_key", required_argument, 0, 0 },
 			{ "auth_key_random_size", required_argument, 0, 0 },
-			{ "auth_iv", required_argument, 0, 0 },
-			{ "auth_iv_random_size", required_argument, 0, 0 },
-
-			{ "aead_algo", required_argument, 0, 0 },
-			{ "aead_op", required_argument, 0, 0 },
-			{ "aead_key", required_argument, 0, 0 },
-			{ "aead_key_random_size", required_argument, 0, 0 },
-			{ "aead_iv", required_argument, 0, 0 },
-			{ "aead_iv_random_size", required_argument, 0, 0 },
-
-			{ "aad", required_argument, 0, 0 },
-			{ "aad_random_size", required_argument, 0, 0 },
 
 			{ "digest_size", required_argument, 0, 0 },
 
-			{ "sessionless", no_argument, 0, 0 },
 			{ "cryptodev_mask", required_argument, 0, 0},
 
-			{ "mac-updating", no_argument, 0, 0},
-			{ "no-mac-updating", no_argument, 0, 0},
 			{ "pdcp_sn_bits", required_argument, 0, 0 },
 			{ "pdcp_domain", required_argument, 0, 0 },
 
@@ -1194,38 +1134,6 @@ check_supported_size(uint16_t length, uint16_t min, uint16_t max,
 }
 
 static int
-check_iv_param(const struct rte_crypto_param_range *iv_range_size,
-		unsigned int iv_param, int iv_random_size,
-		uint16_t iv_length)
-{
-	/*
-	 * Check if length of provided IV is supported
-	 * by the algorithm chosen.
-	 */
-	if (iv_param) {
-		if (check_supported_size(iv_length,
-				iv_range_size->min,
-				iv_range_size->max,
-				iv_range_size->increment)
-					!= 0)
-			return -1;
-	/*
-	 * Check if length of IV to be randomly generated
-	 * is supported by the algorithm chosen.
-	 */
-	} else if (iv_random_size != -1) {
-		if (check_supported_size(iv_random_size,
-				iv_range_size->min,
-				iv_range_size->max,
-				iv_range_size->increment)
-					!= 0)
-			return -1;
-	}
-
-	return 0;
-}
-
-static int
 check_capabilities(struct l2fwd_crypto_options *options, uint8_t cdev_id)
 {
 	struct rte_cryptodev_info dev_info;
@@ -1243,16 +1151,6 @@ check_capabilities(struct l2fwd_crypto_options *options, uint8_t cdev_id)
 						cdev_id);
 		if (cap == NULL)
 			return -1;
-
-		if (check_iv_param(&cap->sym.cipher.iv_size,
-				options->cipher_iv_param,
-				options->cipher_iv_random_size,
-				options->cipher_iv.length) != 0) {
-			RTE_LOG(DEBUG, USER1,
-				"Device %u does not support IV length\n",
-				cdev_id);
-			return -1;
-		}
 
 		/*
 		 * Check if length of provided cipher key is supported
@@ -1299,15 +1197,6 @@ check_capabilities(struct l2fwd_crypto_options *options, uint8_t cdev_id)
 		if (cap == NULL)
 			return -1;
 
-		if (check_iv_param(&cap->sym.auth.iv_size,
-				options->auth_iv_param,
-				options->auth_iv_random_size,
-				options->auth_iv.length) != 0) {
-			RTE_LOG(DEBUG, USER1,
-				"Device %u does not support IV length\n",
-				cdev_id);
-			return -1;
-		}
 		/*
 		 * Check if length of provided auth key is supported
 		 * by the algorithm chosen.
@@ -1455,16 +1344,6 @@ initialize_cryptodevs(struct l2fwd_crypto_options *options, unsigned nb_ports,
 		if (options->xform_chain == L2FWD_CRYPTO_PDCP) {
 			options->block_size = 16;
 
-			/* Set IV if not provided from command line */
-			if (options->cipher_iv_param == 0) {
-				if (options->cipher_iv_random_size != -1)
-					options->cipher_iv.length =
-						options->cipher_iv_random_size;
-				/* No size provided, use minimum size. */
-				else
-					options->cipher_iv.length = 16;
-			}
-
 			/* Set key if not provided from command line */
 			if (options->ckey_param == 0) {
 				if (options->ckey_random_size != -1)
@@ -1482,16 +1361,6 @@ initialize_cryptodevs(struct l2fwd_crypto_options *options, unsigned nb_ports,
 
 		/* Set auth parameters */
 		if (options->xform_chain == L2FWD_CRYPTO_PDCP) {
-
-			/* Set IV if not provided from command line */
-			if (options->auth_iv_param == 0) {
-				if (options->auth_iv_random_size != -1)
-					options->auth_iv.length =
-						options->auth_iv_random_size;
-				/* No size provided, use minimum size. */
-				else
-					options->auth_iv.length = 16;
-			}
 
 			/* Set key if not provided from command line */
 			if (options->akey_param == 0) {
@@ -1682,14 +1551,6 @@ reserve_key_memory(struct l2fwd_crypto_options *options)
 						MAX_KEY_SIZE, 0);
 	if (options->auth_xform.auth.key.data == NULL)
 		rte_exit(EXIT_FAILURE, "Failed to allocate memory for auth key");
-
-	options->cipher_iv.data = rte_malloc("cipher iv", MAX_KEY_SIZE, 0);
-	if (options->cipher_iv.data == NULL)
-		rte_exit(EXIT_FAILURE, "Failed to allocate memory for cipher IV");
-
-	options->auth_iv.data = rte_malloc("auth iv", MAX_KEY_SIZE, 0);
-	if (options->auth_iv.data == NULL)
-		rte_exit(EXIT_FAILURE, "Failed to allocate memory for auth IV");
 }
 
 static int
