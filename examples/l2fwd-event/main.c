@@ -500,6 +500,8 @@ l2fwd_crypto_usage(const char *prgname)
 		"  --auth_iv_random_size SIZE: size of auth IV when generated randomly\n"
 
 		"  --digest_size SIZE: size of digest to be generated/verified\n"
+		"  --pdcp_sn_bits SN_SIZE: sn_size can be 5/7/12/15/18\n"
+		"  --pdcp_domain mode: mode can be CONTROL/USER\n"
 
 		"  --cryptodev_mask MASK: hexadecimal bitmask of crypto devices to configure\n",
 	       prgname);
@@ -533,6 +535,57 @@ parse_cipher_op(enum rte_crypto_cipher_operation *op, char *optarg)
 
 	printf("Cipher operation not supported!\n");
 	return -1;
+}
+
+/** Parse PDCP Domain (control/user plane) command line argument */
+static int
+parse_pdcp_domain(enum rte_security_pdcp_domain *op, char *optarg)
+{
+	if (strcmp("CONTROL", optarg) == 0) {
+		*op = RTE_SECURITY_PDCP_MODE_CONTROL;
+		return 0;
+	} else if (strcmp("USER", optarg) == 0) {
+		*op = RTE_SECURITY_PDCP_MODE_DATA;
+		return 0;
+	}
+
+	printf("Cipher operation not supported!\n");
+	return -1;
+}
+
+/** Parse PDCP SN Size command line argument */
+static int
+parse_sn_size(enum rte_security_pdcp_sn_size *op, char *q_arg)
+{
+	char *end = NULL;
+	unsigned int n;
+
+	n = strtoul(q_arg, &end, 10);
+	if ((q_arg[0] == '\0') || (end == NULL) || (*end != '\0'))
+		n = 0;
+
+	switch (n) {
+	case 5:
+		*op = RTE_SECURITY_PDCP_SN_SIZE_5;
+		break;
+	case 7:
+		*op = RTE_SECURITY_PDCP_SN_SIZE_7;
+		break;
+	case 12:
+		*op = RTE_SECURITY_PDCP_SN_SIZE_12;
+		break;
+	case 15:
+		*op = RTE_SECURITY_PDCP_SN_SIZE_15;
+		break;
+	case 18:
+		*op = RTE_SECURITY_PDCP_SN_SIZE_18;
+		break;
+	default:
+		printf("Invalid pdcp sn size: %u\n", n);
+		return -1;
+	}
+
+	return 0;
 }
 
 /** Parse bytes from command line argument */
@@ -655,6 +708,12 @@ l2fwd_crypto_parse_args_long_options(struct l2fwd_crypto_options *options,
 
 	else if (strcmp(lgopts[option_index].name, "cipher_key_random_size") == 0)
 		return parse_size(&options->ckey_random_size, optarg);
+
+	else if (strcmp(lgopts[option_index].name, "pdcp_sn_bits") == 0)
+		return parse_sn_size(&options->pdcp_xform.sn_size, optarg);
+
+	else if (strcmp(lgopts[option_index].name, "pdcp_domain") == 0)
+		return parse_pdcp_domain(&options->pdcp_xform.domain, optarg);
 
 	else if (strcmp(lgopts[option_index].name, "cipher_iv") == 0) {
 		options->cipher_iv_param = 1;
@@ -851,6 +910,9 @@ l2fwd_crypto_options_print(struct l2fwd_crypto_options *options)
 	switch (options->xform_chain) {
 	case L2FWD_CRYPTO_PDCP:
 		printf("Input --> PDCP --> Output\n");
+		printf("SN_SIZE: %u\n", options->pdcp_xform.sn_size);
+		printf("PDCP Domain(1=USER,0=CONTROL): %u\n",
+				options->pdcp_xform.domain);
 		display_cipher_info(options);
 		display_auth_info(options);
 		break;
@@ -910,6 +972,8 @@ l2fwd_crypto_parse_args(struct l2fwd_crypto_options *options,
 
 			{ "mac-updating", no_argument, 0, 0},
 			{ "no-mac-updating", no_argument, 0, 0},
+			{ "pdcp_sn_bits", required_argument, 0, 0 },
+			{ "pdcp_domain", required_argument, 0, 0 },
 
 			{ NULL, 0, 0, 0 }
 	};
