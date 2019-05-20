@@ -54,6 +54,7 @@ CFLAGS += -I$(RTE_SDK)/drivers/raw/geul_ipc_rawdev/common
 CFLAGS += -I$(RTE_SDK)/drivers/raw/geul_ipc_rawdev/uapi
 CFLAGS += -O0
 CFLAGS += $(WERROR_FLAGS)
+LDFLAGS += -lrte_pmd_geul_ipc_rawdev
 
 include $(RTE_SDK)/mk/rte.extapp.mk
 

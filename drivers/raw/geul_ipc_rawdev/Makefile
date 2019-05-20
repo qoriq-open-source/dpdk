@@ -30,6 +30,7 @@ LDLIBS += -lrte_eal
 LDLIBS += -lrte_rawdev
 LDLIBS += -lrte_bus_vdev
 LDLIBS += -lrte_kvargs
+LDLIBS += -lrte_mempool
 
 EXPORT_MAP := rte_pmd_geul_ipc_rawdev_version.map
 
