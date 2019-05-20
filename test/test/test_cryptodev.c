@@ -6739,6 +6739,458 @@ static int cplane_zuc_zuc_dl_decap(void)
 	return test_pdcp_proto_cplane_decap(i);
 }
 
+/*************** For C-plane 12-bit ******************/
+
+static int cplane_null_null_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_null_null_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_null_snow_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_null_snow_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_null_aes_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_null_aes_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_null_zuc_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_null_zuc_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_snow_null_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_snow_null_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_snow_snow_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_snow_snow_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_snow_aes_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_snow_aes_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_snow_zuc_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_snow_zuc_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_aes_null_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_aes_null_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_aes_snow_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_aes_snow_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_aes_aes_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_aes_aes_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_aes_zuc_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_aes_zuc_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_zuc_null_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_zuc_null_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_zuc_snow_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_zuc_snow_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_zuc_aes_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_zuc_aes_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_zuc_zuc_long_sn_ul_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_zuc_zuc_long_sn_dl_encap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_encap(i);
+}
+
+static int cplane_null_null_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_null_null_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_null_snow_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_null_snow_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_null_aes_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_null_aes_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_null_zuc_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_null_zuc_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_snow_null_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_snow_null_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_snow_snow_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_snow_snow_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_snow_aes_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_snow_aes_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_snow_zuc_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_snow_zuc_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_SNOW_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_aes_null_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_aes_null_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_aes_snow_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_aes_snow_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_aes_aes_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_aes_aes_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_aes_zuc_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_aes_zuc_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_zuc_null_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_zuc_null_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_zuc_snow_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_zuc_snow_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_zuc_aes_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_zuc_aes_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_zuc_zuc_long_sn_ul_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+static int cplane_zuc_zuc_long_sn_dl_decap(void)
+{
+	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
+	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
+	return test_pdcp_proto_cplane_decap(i);
+}
+
+/*****************************************************/
+
 static int uplane_null_ul_12bit_encap(void)
 {
 	int i;
@@ -7216,7 +7668,51 @@ test_pdcp_proto_cplane_encap_all(void)
 	TEST_PDCP_COUNT(cplane_zuc_aes_dl_encap());
 	TEST_PDCP_COUNT(cplane_zuc_zuc_ul_encap());
 	TEST_PDCP_COUNT(cplane_zuc_zuc_dl_encap());
-	printf("\n########### %s - %d passed out of %d\n", __func__, i, n);
+
+	/* For 12-bit SN */
+	//TEST_PDCP_COUNT(cplane_null_null_long_sn_ul_encap());
+	//TEST_PDCP_COUNT(cplane_null_null_long_sn_dl_encap());
+	//TEST_PDCP_COUNT(cplane_null_snow_long_sn_ul_encap());
+	//TEST_PDCP_COUNT(cplane_null_snow_long_sn_dl_encap());
+	//TEST_PDCP_COUNT(cplane_null_aes_long_sn_ul_encap());
+	//TEST_PDCP_COUNT(cplane_null_aes_long_sn_dl_encap());
+	//TEST_PDCP_COUNT(cplane_null_zuc_long_sn_ul_encap());
+	//TEST_PDCP_COUNT(cplane_null_zuc_long_sn_dl_encap());
+
+#if 0
+	TEST_PDCP_COUNT(cplane_snow_null_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_snow_null_long_sn_dl_encap());
+	TEST_PDCP_COUNT(cplane_snow_snow_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_snow_snow_long_sn_dl_encap());
+	TEST_PDCP_COUNT(cplane_snow_aes_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_snow_aes_long_sn_dl_encap());
+	TEST_PDCP_COUNT(cplane_snow_zuc_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_snow_zuc_long_sn_dl_encap());
+#endif
+
+#if 1
+	//TEST_PDCP_COUNT(cplane_aes_null_long_sn_ul_encap());
+	//TEST_PDCP_COUNT(cplane_aes_null_long_sn_dl_encap());
+	//TEST_PDCP_COUNT(cplane_aes_snow_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_aes_snow_long_sn_dl_encap());
+	//TEST_PDCP_COUNT(cplane_aes_aes_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_aes_aes_long_sn_dl_encap());
+	//TEST_PDCP_COUNT(cplane_aes_zuc_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_aes_zuc_long_sn_dl_encap());
+#endif
+
+#if 0
+	TEST_PDCP_COUNT(cplane_zuc_null_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_zuc_null_long_sn_dl_encap());
+	TEST_PDCP_COUNT(cplane_zuc_snow_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_zuc_snow_long_sn_dl_encap());
+	TEST_PDCP_COUNT(cplane_zuc_aes_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_zuc_aes_long_sn_dl_encap());
+	TEST_PDCP_COUNT(cplane_zuc_zuc_long_sn_ul_encap());
+	TEST_PDCP_COUNT(cplane_zuc_zuc_long_sn_dl_encap());
+#endif
+	if (n - i)
+		printf("## %s: %d passed out of %d\n", __func__, i, n);
 
 	return n - i;
 };
@@ -7258,7 +7754,49 @@ test_pdcp_proto_cplane_decap_all(void)
 	TEST_PDCP_COUNT(cplane_zuc_aes_dl_decap());
 	TEST_PDCP_COUNT(cplane_zuc_zuc_ul_decap());
 	TEST_PDCP_COUNT(cplane_zuc_zuc_dl_decap());
-	printf("\n########### %s - %d passed out of %d\n", __func__, i, n);
+
+	/* C-plane 12-bit */
+#if 0
+	TEST_PDCP_COUNT(cplane_null_null_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_null_null_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_null_snow_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_null_snow_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_null_aes_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_null_aes_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_null_zuc_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_null_zuc_long_sn_dl_decap());
+
+	TEST_PDCP_COUNT(cplane_snow_null_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_snow_null_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_snow_snow_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_snow_snow_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_snow_aes_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_snow_aes_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_snow_zuc_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_snow_zuc_long_sn_dl_decap());
+#endif
+
+	//TEST_PDCP_COUNT(cplane_aes_null_long_sn_ul_decap());
+	//TEST_PDCP_COUNT(cplane_aes_null_long_sn_dl_decap());
+	//TEST_PDCP_COUNT(cplane_aes_snow_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_aes_snow_long_sn_dl_decap());
+	//TEST_PDCP_COUNT(cplane_aes_aes_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_aes_aes_long_sn_dl_decap());
+	//TEST_PDCP_COUNT(cplane_aes_zuc_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_aes_zuc_long_sn_dl_decap());
+
+#if 0
+	TEST_PDCP_COUNT(cplane_zuc_null_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_zuc_null_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_zuc_snow_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_zuc_snow_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_zuc_aes_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_zuc_aes_long_sn_dl_decap());
+	TEST_PDCP_COUNT(cplane_zuc_zuc_long_sn_ul_decap());
+	TEST_PDCP_COUNT(cplane_zuc_zuc_long_sn_dl_decap());
+#endif
+	if (n - i)
+		printf("## %s: %d passed out of %d\n", __func__, i, n);
 
 	return n - i;
 };
