@@ -262,6 +262,10 @@ int ipc_put_buf(uint32_t channel_id, ipc_sh_buf_t *buf_to_free, ipc_t instance)
 	ipc_sh_buf_t *sh = buf_to_free;
 	uint64_t range = 0;
 
+	UNUSED(pc);
+	UNUSED(cc);
+	UNUSED(ci);
+
 	if (!ipc_instance || !ipc_instance->initialized)
 		return IPC_INSTANCE_INVALID;
 
@@ -354,6 +358,10 @@ int ipc_send_msg(uint32_t channel_id,
 	ipc_bd_t *bdr, *bd;
 	uint64_t virt;
 
+	UNUSED(pc);
+	UNUSED(cc);
+	UNUSED(ci);
+
 	PR("here %s %d\n \n \n", __func__, __LINE__);
 	if (!src || !len)
 		return IPC_INPUT_INVALID;
@@ -432,6 +440,10 @@ int ipc_recv_ptr(uint32_t channel_id, void *dst, ipc_t instance)
 	ipc_sh_buf_t sh;
 	uint64_t vaddr2 =0x0;
 
+	UNUSED(pc);
+	UNUSED(cc);
+	UNUSED(ci);
+	UNUSED(pi);
 
 	if (!ipc_instance || !ipc_instance->initialized) {
 		return IPC_INSTANCE_INVALID;
@@ -499,6 +511,11 @@ int ipc_recv_msg(uint32_t channel_id, void *dst,
 	uint64_t vaddr2 = 0;
 	ipc_bd_t *bdr, *bd;
 
+	UNUSED(pc);
+	UNUSED(cc);
+	UNUSED(ci);
+	UNUSED(pi);
+
 	if (!dst || !len)
 		return IPC_INPUT_INVALID;
 
@@ -560,6 +577,12 @@ int ipc_recv_msg_ptr(uint32_t channel_id, void **dst_buffer,
 	ipc_bd_t *bdr, *bd;
 	uint64_t vaddr2;
 
+	UNUSED(pc);
+	UNUSED(cc);
+	UNUSED(ci);
+	UNUSED(pi);
+	UNUSED(ring_size);
+
 	if (!dst_buffer || !(*dst_buffer) || !len)
 		return IPC_INPUT_INVALID;
 
@@ -618,6 +641,11 @@ int ipc_set_consumed_status(uint32_t channel_id, ipc_t instance)
 	ipc_ch_t *ch;
 	ipc_br_md_t *md;
 	uint32_t cc, pc, ring_size, pi, ci;
+
+	UNUSED(pc);
+	UNUSED(cc);
+	UNUSED(ci);
+	UNUSED(pi);
 
 	if (!ipc_instance || !ipc_instance->initialized)
 		return IPC_INSTANCE_INVALID;
