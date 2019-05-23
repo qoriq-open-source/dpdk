@@ -6765,7 +6765,7 @@ static int cplane_zuc_zuc_dl_decap(void)
 }
 
 /*************** For C-plane 12-bit ******************/
-
+#if 0
 static int cplane_null_null_long_sn_ul_encap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_NULL_ENC_OFFSET +
@@ -6898,42 +6898,42 @@ static int cplane_aes_snow_long_sn_ul_encap(void)
 	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_cplane_encap(i);
 }
-
+#endif
 static int cplane_aes_snow_long_sn_dl_encap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_cplane_encap(i);
 }
-
+#if 0
 static int cplane_aes_aes_long_sn_ul_encap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_cplane_encap(i);
 }
-
+#endif
 static int cplane_aes_aes_long_sn_dl_encap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_cplane_encap(i);
 }
-
+#if 0
 static int cplane_aes_zuc_long_sn_ul_encap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_cplane_encap(i);
 }
-
+#endif
 static int cplane_aes_zuc_long_sn_dl_encap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_cplane_encap(i);
 }
-
+#if 0
 static int cplane_zuc_null_long_sn_ul_encap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
@@ -7122,6 +7122,7 @@ static int cplane_aes_snow_long_sn_ul_decap(void)
 	CPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_cplane_decap(i);
 }
+#endif
 
 static int cplane_aes_snow_long_sn_dl_decap(void)
 {
@@ -7129,35 +7130,35 @@ static int cplane_aes_snow_long_sn_dl_decap(void)
 	CPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_cplane_decap(i);
 }
-
+#if 0
 static int cplane_aes_aes_long_sn_ul_decap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_cplane_decap(i);
 }
-
+#endif
 static int cplane_aes_aes_long_sn_dl_decap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_cplane_decap(i);
 }
-
+#if 0
 static int cplane_aes_zuc_long_sn_ul_decap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_cplane_decap(i);
 }
-
+#endif
 static int cplane_aes_zuc_long_sn_dl_decap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_AES_ENC_OFFSET +
 	CPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_cplane_decap(i);
 }
-
+#if 0
 static int cplane_zuc_null_long_sn_ul_decap(void)
 {
 	int i = PDCP_CPLANE_LONG_SN_OFFSET + CPLANE_ZUC_ENC_OFFSET +
@@ -7215,7 +7216,7 @@ static int cplane_zuc_zuc_long_sn_dl_decap(void)
 }
 
 /*****************************************************/
-
+#endif
 static int uplane_null_ul_12bit_encap(void)
 {
 	int i;
@@ -7663,7 +7664,7 @@ static int uplane_null_null_12bit_dl_encap(void)
 	UPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_encap_with_int(i);
 }
-
+#if 0
 static int uplane_null_snow_12bit_ul_encap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_NULL_ENC_OFFSET +
@@ -7782,42 +7783,42 @@ static int uplane_aes_snow_12bit_ul_encap(void)
 	UPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_uplane_encap_with_int(i);
 }
-
+#endif
 static int uplane_aes_snow_12bit_dl_encap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_encap_with_int(i);
 }
-
+#if 0
 static int uplane_aes_aes_12bit_ul_encap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_uplane_encap_with_int(i);
 }
-
+#endif
 static int uplane_aes_aes_12bit_dl_encap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_encap_with_int(i);
 }
-
+#if 0
 static int uplane_aes_zuc_12bit_ul_encap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_uplane_encap_with_int(i);
 }
-
+#endif
 static int uplane_aes_zuc_12bit_dl_encap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_encap_with_int(i);
 }
-
+#if 0
 static int uplane_zuc_null_12bit_ul_encap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_ZUC_ENC_OFFSET +
@@ -7873,7 +7874,7 @@ static int uplane_zuc_zuc_12bit_dl_encap(void)
 	UPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_encap_with_int(i);
 }
-
+#endif
 static int uplane_null_null_12bit_ul_decap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_NULL_ENC_OFFSET +
@@ -7887,7 +7888,7 @@ static int uplane_null_null_12bit_dl_decap(void)
 	UPLANE_NULL_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap_with_int(i);
 }
-
+#if 0
 static int uplane_null_snow_12bit_ul_decap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_NULL_ENC_OFFSET +
@@ -8006,42 +8007,42 @@ static int uplane_aes_snow_12bit_ul_decap(void)
 	UPLANE_SNOW_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap_with_int(i);
 }
-
+#endif
 static int uplane_aes_snow_12bit_dl_decap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_SNOW_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap_with_int(i);
 }
-
+#if 0
 static int uplane_aes_aes_12bit_ul_decap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_AES_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap_with_int(i);
 }
-
+#endif
 static int uplane_aes_aes_12bit_dl_decap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_AES_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap_with_int(i);
 }
-
+#if 0
 static int uplane_aes_zuc_12bit_ul_decap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_ZUC_AUTH_OFFSET + UPLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap_with_int(i);
 }
-
+#endif
 static int uplane_aes_zuc_12bit_dl_decap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_AES_ENC_OFFSET +
 	UPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap_with_int(i);
 }
-
+#if 0
 static int uplane_zuc_null_12bit_ul_decap(void)
 {
 	int i = PDCP_UPLANE_12BIT_OFFSET + UPLANE_ZUC_ENC_OFFSET +
@@ -8097,7 +8098,7 @@ static int uplane_zuc_zuc_12bit_dl_decap(void)
 	UPLANE_ZUC_AUTH_OFFSET + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap_with_int(i);
 }
-
+#endif
 #define TEST_PDCP_COUNT(func) do { \
 	if (func == TEST_SUCCESS)  \
 		i++;		   \
