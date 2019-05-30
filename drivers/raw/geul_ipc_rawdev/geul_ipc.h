@@ -65,8 +65,8 @@ typedef struct ipc_bd_ring_buf_list {
 typedef struct ipc_channel {
 	uint32_t ch_id;		/**< Channel id */
 	uint32_t bl_initialized;	/**< Set when buffer list is initialized */
-	uint32_t event_cb_l;		/**< IPC channel callback for async design */
-	uint32_t event_cb_h;		/**< IPC channel callback for async design */
+	uint32_t msi_value;		/**< This MSI will correspond to an IRQ number */
+	uint32_t msi_valid;		/**< 0 - Invalid MSI, 1 - Valid MSI */
 	ipc_ch_type_t ch_type;
 	ipc_bd_ring_msg_t br_msg_desc;
 	ipc_bd_ring_bl_t br_bl_desc;

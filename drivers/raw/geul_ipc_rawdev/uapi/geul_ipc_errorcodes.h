@@ -43,5 +43,6 @@
 #define IPC_MMAP_FAIL			( -14 ) /** MMAP fail */
 #define IPC_OPEN_FAIL			( -15 ) /** OPEN fail */
 #define IPC_NOT_IMPLEMENTED		( -16 )	/** IPC feature is not implemented yet */
+#define IPC_EVENTFD_FAIL		( -17 ) /** eventfd initalization failed */
 
 #endif	/* __IPC_ERRCODES_H__ */
