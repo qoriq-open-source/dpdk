@@ -20,8 +20,11 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 
 	int ret = 0;
 	int idx, i;
+	uint32_t pool_id = 0;
 	t_FmVspParams vsp_params;
 	t_FmBufferPrefixContent buf_prefix_cont;
+	char pool_name[RTE_MEMPOOL_NAMESIZE];
+	struct fman_if_bpool *fm_if_bp;
 
 	if (fm->num_profiles)
 		num_profiles = fm->num_profiles;
@@ -34,6 +37,27 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 
 	idx = mac_id[fm->mac_idx];
 
+	/* Extract the BPID associated with shared MAC. There is only one
+	 * shared MAC so this loop is guaranteed to run only once.
+	 */
+	list_for_each_entry(fm_if_bp, &fm->bpool_list, node) {
+		pool_id = fm_if_bp->bpid;
+	}
+
+	/* Create a pool with the BPID extracted - this would be pinned to
+	 * kernel for its queues. This name is matched in mbuf_create_pool
+	 * API of DPAA Mempool.
+	 */
+	snprintf(pool_name, sizeof(pool_name), "vsp_pool_%u", pool_id);
+	vsp_mempool[rel_idx][0] =
+		rte_pktmbuf_pool_create((const char *)pool_name,
+					VSP_NUM_BUFS,
+					VSP_CACHE_SIZE,
+					0, VSP_DATA_ROOM_SIZE,
+					SOCKET_ID_ANY);
+
+	struct dpaa_bp_info *bp_info =
+		DPAA_MEMPOOL_TO_POOL_INFO(vsp_mempool[rel_idx][0]);
 
 	/* first initialize the base storage profile */
 	memset(&vsp_params, 0, sizeof(vsp_params));
@@ -43,11 +67,12 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 	vsp_params.portParams.portId = idx;
 	vsp_params.portParams.portType = e_FM_PORT_TYPE_RX;
 	vsp_params.extBufPools.numOfPoolsUsed = 1;
-	vsp_params.extBufPools.extBufPool[0].id = bp_base->bpid;
-	vsp_params.extBufPools.extBufPool[0].size = bp_base->size;
+	/* First VSP profile contains the BPID extracted above */
+	vsp_params.extBufPools.extBufPool[0].id = bp_info->bpid;
+	vsp_params.extBufPools.extBufPool[0].size = bp_info->size;
 
 	DPAA_BUS_DEBUG("Configured base profile: bpid %u size %u",
-		       bp_base->bpid, bp_base->size);
+		       bp_info->bpid, bp_info->size);
 
 	vsp[rel_idx][VSP_BASE] = FM_VSP_Config(&vsp_params);
 	if (!vsp[rel_idx][VSP_BASE]) {
@@ -82,30 +107,18 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 
 	/* create a descriptor for the FM VSP module */
 	for (i = 1; i < num_profiles; i++) {
-		char pool_name[RTE_MEMPOOL_NAMESIZE];
 		memset(&vsp_params, 0, sizeof(vsp_params));
-
-		snprintf(pool_name, sizeof(pool_name), "vsp_pool_%u", i);
-		vsp_mempool[rel_idx][i] =
-			rte_pktmbuf_pool_create((const char *)pool_name,
-						VSP_NUM_BUFS,
-						VSP_CACHE_SIZE,
-						0, VSP_DATA_ROOM_SIZE,
-						SOCKET_ID_ANY);
-
-		struct dpaa_bp_info *bp_info =
-			DPAA_MEMPOOL_TO_POOL_INFO(vsp_mempool[rel_idx][i]);
 
 		vsp_params.h_Fm = fman_handle;
 		vsp_params.relativeProfileId = i;
 		vsp_params.portParams.portId = idx;
 		vsp_params.portParams.portType = e_FM_PORT_TYPE_RX;
 		vsp_params.extBufPools.numOfPoolsUsed = 1;
-		vsp_params.extBufPools.extBufPool[0].id = bp_info->bpid;
-		vsp_params.extBufPools.extBufPool[0].size = bp_info->size;
+		vsp_params.extBufPools.extBufPool[0].id = bp_base->bpid;
+		vsp_params.extBufPools.extBufPool[0].size = bp_base->size;
 
 		DPAA_BUS_DEBUG("Configured profile %d: bpid %u size %u",
-			       i, bp_info->bpid, bp_info->size);
+			       i, bp_base->bpid, bp_base->size);
 
 		vsp[rel_idx][i] = FM_VSP_Config(&vsp_params);
 		if (!vsp[rel_idx][i]) {

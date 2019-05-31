@@ -631,7 +631,9 @@ int dpaa_eth_rx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx,
 
 		/* Buffer pool size should be equal to Dataroom Size*/
 		bp_size = rte_pktmbuf_data_room_size(mp);
-		fman_if_set_bp(dpaa_intf->fif, mp->size,
+		/* Update bp_info->bpid only if this is not a shared MAC */
+		if(!dpaa_intf->fif->is_shared_mac)
+			fman_if_set_bp(dpaa_intf->fif, mp->size,
 			       dpaa_intf->bp_info->bpid, bp_size);
 		dpaa_intf->valid = 1;
 		DPAA_PMD_DEBUG("if:%s fd_offset = %d offset = %d",

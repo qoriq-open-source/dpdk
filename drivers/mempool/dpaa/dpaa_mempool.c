@@ -37,24 +37,6 @@ struct dpaa_memseg_list rte_dpaa_memsegs
 
 struct dpaa_bp_info *rte_dpaa_bpid_info = NULL;
 
-static void check_shared_bpid(struct rte_mempool *mp, void *userdata)
-{
-	struct dpaa_bp_info *bp_info;
-	struct bman_pool_params *params;
-
-	bp_info = (struct dpaa_bp_info *)mp->pool_data;
-	params = (struct bman_pool_params *)userdata;
-
-	/* In case of shared mac, we set bpool params to take a dynamic bpid,
-	 * if a new pool is created in a secondary process.
-	 * The secondary process will also see the shared mac, that's why we
-	 * need to use a different pool for the secondary process.
-	 */
-	if (bp_info && (bp_info->bpid == params->bpid)) {
-		params->flags |= BMAN_POOL_FLAG_DYNAMIC_BPID;
-	}
-}
-
 static int
 dpaa_mbuf_create_pool(struct rte_mempool *mp)
 {
@@ -62,9 +44,8 @@ dpaa_mbuf_create_pool(struct rte_mempool *mp)
 	struct bm_buffer bufs[8];
 	struct dpaa_bp_info *bp_info;
 	uint8_t bpid;
-	int num_bufs = 0, ret = 0, loop;
-	struct fm_eth_port_cfg *cfg;
-	struct fman_if *fman_intf;
+	int num_bufs = 0, ret = 0;
+	uint32_t shared_pool_id;
 	struct bman_pool_params params = {
 		.flags = BMAN_POOL_FLAG_DYNAMIC_BPID
 	};
@@ -81,31 +62,26 @@ dpaa_mbuf_create_pool(struct rte_mempool *mp)
 		}
 	}
 
-	for (loop = 0; loop < dpaa_netcfg->num_ethports; loop++) {
-		cfg = &dpaa_netcfg->port_cfg[loop];
-		fman_intf = cfg->fman_if;
-		/* For shared MAC, the exact bpid must be used.
-		 * The other partition (kernel) is aware of the bpid.
-		 */
-		if (fman_intf->is_shared_mac) {
-			struct fman_if_bpool *fm_if_bp;
-			memset(&params, 0, sizeof(params));
-			/* There is only one buffer pool for shared mac.
-			 * No overwrite is performed
-			 */
-			list_for_each_entry(fm_if_bp, &fman_intf->bpool_list,
-					   node) {
-				params.bpid = fm_if_bp->bpid;
-				params.flags = 0;
-			}
-		}
-	}
-	/* In case of shared mac the bpid is taken from the fman port
-	 * and used when a mempool is created. If another process tries to
-	 * create a mempool, we iterate through existing mempools to make sure
-	 * that we do not use the shared mac bpid once again.
+	/* If this is a VSP Pool, which is named as 'vsp_pool_<BPID', extract
+	 * the BPID from it - that would be used while creating the pool.
 	 */
-	rte_mempool_walk(check_shared_bpid, &params);
+	if (!strncmp(mp->name, "vsp_pool_", strlen("vsp_pool_"))) {
+		char *temp;
+		temp = strrchr(mp->name, '_');
+		if (!temp) {
+			DPAA_MEMPOOL_ERR("Unable to find VSP Pool");
+			DPAA_MEMPOOL_ERR("Continuing, but may fail");
+			goto skip;
+		}
+		temp = temp + 1;
+		shared_pool_id = atoi(temp);
+		/* XXX It is a risk here that vsp_pool_X has a valid BPID as
+		 * X. If not, things would go wrong from here.
+		 */
+		params.bpid = shared_pool_id;
+		params.flags = 0;
+	}
+skip:
 
 	bp = bman_new_pool(&params);
 	if (!bp) {
