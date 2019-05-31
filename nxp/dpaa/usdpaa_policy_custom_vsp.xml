@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+  SPDX-License-Identifier: BSD-3-Clause
+
+  Copyright 2019 NXP
+
+-->
+
+<!--
+This fmc policy file establishes separate policies for network interfaces.  It includes
+entries for all 1 G and 10 G interfaces on two FMan instances.	A given policy file need
+not used them all.  The entries names end with an integer, 0 - 15.  The intended usage is
+to associate them with FMan MACs as follows.
+
+  fm0 dtsec0  - 0
+      dtsec1  - 1
+      dtsec2  - 2
+      dtsec3  - 3
+      dtsec4  - 4
+      dtsec5  - 5
+       tgec0  - 6
+       tgec1  - 7
+       tgec2  - 16
+       tgec3  - 17
+  fm1 dtsec0  - 8
+      dtsec1  - 9
+      dtsec2  - 10
+      dtsec3  - 11
+      dtsec4  - 12
+      dtsec5  - 13
+       tgec0  - 14
+       tgec1  - 15
+       tgec2  - 18
+       tgec3  - 19
+
+Likely, no single config file will use all of the policies in this file.
+
+The policies form a key using only the IPv4 source and destination IP address and SPI
+field of ESP header. The key is then used to hash to "count" FQs.  The base (i.e. first)
+FQID is different for each policy.
+
+If frame is non-ESP, the policies form a key using only the IPv4 source and destination
+IP address fields. The key is then used to hash to "count" FQs.  The base (i.e. first)
+FQID is different for each policy.
+
+Non-IPv4 packets are sent to the default FQ, the ID of which is distinct for each
+policy.
+-->
+
+<netpcd xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlProject/pcd.xsd" name="example"
+	description="Bridging configuration">
+
+<!--	xxxxxxxxxxxxxxxxxxxxxxxx Distributions xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
+	<vsp name="shared_mac_pool" base="0"/>
+	<vsp name="dpdk_flows" base="1"/>
+	<classification name="cust_classif_dsp_id" >
+		<key>
+			<nonheader source="frame_start"  offset="0x2b" size="1"/>
+		</key>
+		<!-- queues 0x900 through 0x903 are taken from dpdk log -->
+		<entry>
+			<vsp name="dpdk_flows" />
+			<data>0x00</data>
+			<mask>0x1F</mask>
+			<queue base="0x900"/>
+		</entry>
+		<entry>
+			<vsp name="dpdk_flows" />
+			<data>0x01</data>
+			<mask>0x1F</mask>
+			<queue base="0x901"/>
+		</entry>
+			<entry>
+			<data>0x02</data>
+			<mask>0x1F</mask>
+			<queue base="0x902"/>
+		</entry>
+		<entry>
+			<data>0x03</data>
+			<mask>0x1F</mask>
+			<queue base="0x903"/>
+		</entry>
+		<entry>
+			<data>0x04</data>
+			<mask>0x1F</mask>
+			<queue base="0x900"/>
+		</entry>
+		<entry>
+			<data>0x05</data>
+			<mask>0x1F</mask>
+			<queue base="0x901"/>
+		</entry>
+		<entry>
+			<data>0x06</data>
+			<mask>0x1F</mask>
+			<queue base="0x902"/>
+		</entry>
+		<entry>
+			<data>0x07</data>
+			<mask>0x1F</mask>
+			<queue base="0x903"/>
+		</entry>
+
+		 <!-- shared mac rx queue used when traffic does not match dsp_id -->
+		<queue base="0x2000"/>
+	</classification>
+
+	<classification name="cust_classif_msg_id" >
+		<key>
+			<nonheader source="frame_start"  offset="0x34" size="2"/>
+		</key>
+		<entry>
+			<data>0x007e</data>
+			<action type="classification" name="cust_classif_dsp_id" />
+		</entry>
+		<entry>
+			<data>0x0000</data>
+			<action type="classification" name="cust_classif_dsp_id" />
+		</entry>
+			<!-- shared mac rx queue used when traffic does not match msg_id 7e or 00 -->
+			<queue base="0x2000"/>
+	</classification>
+
+	<classification name="udp_cust_classif" >
+		<key>
+			<nonheader source="key" action="exact_match" offset="0" size="2"/>
+		</key>
+		<entry>
+			<data>0x1092</data>
+			<action type="classification" name="cust_classif_msg_id" />
+		</entry>
+			<!-- see above -->
+			<queue base="0x2000"/>
+	</classification>
+
+	<distribution name="udp_dist">
+		<!-- <queue count="4" base="0x900"/> -->
+	 <vsp name="shared_mac_pool" />
+		<protocols>
+			<protocolref name="udp"/>
+			<protocolref name="ipv4"/>
+		</protocols>
+		<key>
+			<fieldref name="udp.dport"/>
+		</key>
+		<action type="classification" name="udp_cust_classif" />
+	</distribution>
+
+	<distribution name="default_dist5">
+		<!-- see above -->
+		<queue count="1" base="0x2000"/>
+	</distribution>
+
+<!--	xxxxxxxxxxxxxxxxxxxxxxxxxx Policies xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
+	<policy name="hash_ipsec_src_dst_spi_policy_mac5">
+		<dist_order>
+			<distributionref name="udp_dist"/>
+			<distributionref name="default_dist5"/>
+		</dist_order>
+	</policy>
+
+</netpcd>
