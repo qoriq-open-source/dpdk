@@ -36,7 +36,9 @@ enum rta_sec_era {
 	RTA_SEC_ERA_6,
 	RTA_SEC_ERA_7,
 	RTA_SEC_ERA_8,
-	MAX_SEC_ERA = RTA_SEC_ERA_8
+	RTA_SEC_ERA_9,
+	RTA_SEC_ERA_10,
+	MAX_SEC_ERA = RTA_SEC_ERA_10
 };
 
 /**

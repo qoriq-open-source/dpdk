@@ -510,6 +510,9 @@ dpaa_sec_prep_pdcp_cdb(dpaa_sec_session *ses)
 					ses->pdcp.hfn_threshold,
 					&cipherdata, p_authdata, 0);
 	}
+	for (int i = 0; i < shared_desc_len; i++)
+		DPAA_SEC_DEBUG("DESC[%d]:  %x \n", i,
+				rte_cpu_to_be_32(cdb->sh_desc[i]));
 
 	return shared_desc_len;
 }
