@@ -7433,6 +7433,70 @@ static int uplane_zuc_dl_15bit_encap(void)
 	return test_pdcp_proto_uplane_encap(i);
 }
 
+static int uplane_null_ul_18bit_encap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 0 + UPLINK_OFFSET;
+	return test_pdcp_proto_uplane_encap(i);
+}
+
+static int uplane_null_dl_18bit_encap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 0 + DOWNLINK_OFFSET;
+	return test_pdcp_proto_uplane_encap(i);
+}
+
+static int uplane_snow_ul_18bit_encap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 2 + UPLINK_OFFSET;
+	return test_pdcp_proto_uplane_encap(i);
+}
+
+static int uplane_snow_dl_18bit_encap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 2 + DOWNLINK_OFFSET;
+	return test_pdcp_proto_uplane_encap(i);
+}
+
+static int uplane_aes_ul_18bit_encap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 4 + UPLINK_OFFSET;
+	return test_pdcp_proto_uplane_encap(i);
+}
+
+static int uplane_aes_dl_18bit_encap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 4 + DOWNLINK_OFFSET;
+	return test_pdcp_proto_uplane_encap(i);
+}
+
+static int uplane_zuc_ul_18bit_encap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 6 + UPLINK_OFFSET;
+	return test_pdcp_proto_uplane_encap(i);
+}
+
+static int uplane_zuc_dl_18bit_encap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 6 + DOWNLINK_OFFSET;
+	return test_pdcp_proto_uplane_encap(i);
+}
+
 static int uplane_null_ul_12bit_decap(void)
 {
 	int i;
@@ -7646,6 +7710,70 @@ static int uplane_zuc_dl_15bit_decap(void)
 
 	i = PDCP_UPLANE_OFFSET + ZUC_PROTO_OFFSET + FIFTEEN_BIT_SEQ_NUM_OFFSET
 		+ DOWNLINK_OFFSET;
+	return test_pdcp_proto_uplane_decap(i);
+}
+
+static int uplane_null_ul_18bit_decap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 0 + UPLINK_OFFSET;
+	return test_pdcp_proto_uplane_decap(i);
+}
+
+static int uplane_null_dl_18bit_decap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 0 + DOWNLINK_OFFSET;
+	return test_pdcp_proto_uplane_decap(i);
+}
+
+static int uplane_snow_ul_18bit_decap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 2 + UPLINK_OFFSET;
+	return test_pdcp_proto_uplane_decap(i);
+}
+
+static int uplane_snow_dl_18bit_decap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 2 + DOWNLINK_OFFSET;
+	return test_pdcp_proto_uplane_decap(i);
+}
+
+static int uplane_aes_ul_18bit_decap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 4 + UPLINK_OFFSET;
+	return test_pdcp_proto_uplane_decap(i);
+}
+
+static int uplane_aes_dl_18bit_decap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 4 + DOWNLINK_OFFSET;
+	return test_pdcp_proto_uplane_decap(i);
+}
+
+static int uplane_zuc_ul_18bit_decap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 6 + UPLINK_OFFSET;
+	return test_pdcp_proto_uplane_decap(i);
+}
+
+static int uplane_zuc_dl_18bit_decap(void)
+{
+	int i;
+
+	i = PDCP_UPLANE_18BIT_OFFSET + 6 + DOWNLINK_OFFSET;
 	return test_pdcp_proto_uplane_decap(i);
 }
 
@@ -8307,6 +8435,15 @@ test_pdcp_proto_uplane_encap_all(void)
 	TEST_PDCP_COUNT(uplane_zuc_ul_15bit_encap());
 	TEST_PDCP_COUNT(uplane_zuc_dl_15bit_encap());
 
+	TEST_PDCP_COUNT(uplane_null_ul_18bit_encap());
+	TEST_PDCP_COUNT(uplane_null_dl_18bit_encap());
+	TEST_PDCP_COUNT(uplane_snow_ul_18bit_encap());
+	TEST_PDCP_COUNT(uplane_snow_dl_18bit_encap());
+	TEST_PDCP_COUNT(uplane_aes_ul_18bit_encap());
+	TEST_PDCP_COUNT(uplane_aes_dl_18bit_encap());
+	TEST_PDCP_COUNT(uplane_zuc_ul_18bit_encap());
+	TEST_PDCP_COUNT(uplane_zuc_dl_18bit_encap());
+
 	/* For 12-bit SN with integrity */
 	TEST_PDCP_COUNT(uplane_null_null_12bit_ul_encap());
 	TEST_PDCP_COUNT(uplane_null_null_12bit_dl_encap());
@@ -8378,6 +8515,15 @@ test_pdcp_proto_uplane_decap_all(void)
 	TEST_PDCP_COUNT(uplane_zuc_dl_7bit_decap());
 	TEST_PDCP_COUNT(uplane_zuc_ul_15bit_decap());
 	TEST_PDCP_COUNT(uplane_zuc_dl_15bit_decap());
+
+	TEST_PDCP_COUNT(uplane_null_ul_18bit_decap());
+	TEST_PDCP_COUNT(uplane_null_dl_18bit_decap());
+	TEST_PDCP_COUNT(uplane_snow_ul_18bit_decap());
+	TEST_PDCP_COUNT(uplane_snow_dl_18bit_decap());
+	TEST_PDCP_COUNT(uplane_aes_ul_18bit_decap());
+	TEST_PDCP_COUNT(uplane_aes_dl_18bit_decap());
+	TEST_PDCP_COUNT(uplane_zuc_ul_18bit_decap());
+	TEST_PDCP_COUNT(uplane_zuc_dl_18bit_decap());
 
 	/* u-plane 12-bit with integrity */
 	TEST_PDCP_COUNT(uplane_null_null_12bit_ul_decap());
