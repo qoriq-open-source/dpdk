@@ -82,10 +82,10 @@ typedef struct tti_priv {
 	struct eventfd_ctx *efd_ctx;
 } tti_priv_t;
 
-typedef struct ioctl_ipc_ch {
+typedef struct ipc_eventfd {
 	uint32_t	efd;
 	uint32_t	ipc_channel_num;
 	uint32_t	msi_value;
-} ioctl_ipc_ch_t;
+} ipc_eventfd_t;
 
 #endif /*__GUL_IPC_IOCTL__*/

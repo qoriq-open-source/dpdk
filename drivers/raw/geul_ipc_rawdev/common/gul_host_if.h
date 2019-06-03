@@ -50,10 +50,8 @@
  **/
 
 /*
- * For Aberdeen DMA buff is used for FreeRTOS image load, thus 512KB max size.
- * This buffer is not required for Aberdeen, as Linux ITB is loaded using
- * scratch buf.
- * XXX:TBD:Revisit this size after FreeRTOS implementation is available
+ * Assignment of Modem PCIe address space for Host, FECA (Aberdeen only)
+ * Memories
  */
 #ifndef ABERDEEN
 
@@ -70,7 +68,7 @@
 #define GUL_FECA_APB_SLAVE_SIZE		(64 * 1024) /*64 KB*/
 #define GUL_EP_DMA_BUF_PHYS_SIZE	(0) /*0 KB*/
 #define GUL_EP_TO_HOST_MSI_SIZE		(4 * 1024) /*4 KB*/
-#define GUL_MAX_IMAGE_SIZE              0x6400000
+#define GUL_MAX_IMAGE_SIZE              0xc800000
 #endif
 
 
@@ -189,8 +187,8 @@ enum gul_boot_fsm {
 struct sgtable {
 	uint32_t len;
 	uint32_t resv;
-	uint32_t src;
-	uint32_t dest;
+	uint64_t src;
+	uint64_t dest;
 };
 
 struct cfword {
@@ -257,7 +255,7 @@ struct debug_log_regs {
 #define GUL_LOG_LEVEL_ALL	5
 
 struct gul_QDMA {
-	uint32_t status;
+	uint32_t  status;
 	uint32_t xfer_req;
 	uint32_t success_interrupt;
 	uint32_t error_interrupt;
@@ -309,8 +307,6 @@ struct hif_rfic_regs {
 	uint32_t spi_access_disabled;
 } __attribute__((packed));
 
-
-
 enum host_mem_region_id {
 	HOST_MEM_HUGE_PAGE_BUF = 0,
 	HOST_MEM_SCRATCH_BUF,
@@ -334,6 +330,13 @@ struct host_mem_region {
 
 #define GUL_HIF_MAJOR_VERSION		(0)
 #define GUL_HIF_MINOR_VERSION		(1)
+#define MSI_IRQ_COUNT 8
+
+struct hif_msi_regs {
+	uint32_t msi_addr_off_l;
+	uint32_t msi_addr_off_h;
+	uint32_t msi_val;
+}__attribute__((packed));
 
 struct gul_hif {
 	uint32_t ver;
@@ -347,7 +350,7 @@ struct gul_hif {
 	struct gul_stats stats;
 	struct hif_ipc_regs ipc_regs;
 	struct hif_rfic_regs rfic_regs;
-
+	struct hif_msi_regs msi_regs[MSI_IRQ_COUNT];
 } __attribute__((packed));
 
 

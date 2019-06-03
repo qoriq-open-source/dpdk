@@ -960,7 +960,7 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 	}
 
 	if (en_event) {
-		ioctl_ipc_ch_t ch_args;
+		ipc_eventfd_t efd_args;
 
 		/* Open an Event FD to get events from kernel.*/
 		event_fd = eventfd(0, EFD_NONBLOCK);
@@ -972,17 +972,17 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 		ipc_priv->channels[channel_id]->eventfd = event_fd;
 
 		/* Send IOCTL to register this event_fd with kernel*/
-		ch_args.efd = event_fd;
-		ch_args.ipc_channel_num = channel_id;
-		ret = ioctl(ipc_priv->dev_ipc, IOCTL_GUL_IPC_CHANNEL_REGISTER, &ch_args);
+		efd_args.efd = event_fd;
+		efd_args.ipc_channel_num = channel_id;
+		ret = ioctl(ipc_priv->dev_ipc, IOCTL_GUL_IPC_CHANNEL_REGISTER, &efd_args);
 		if (ret) {
 			printf("IPC_CHANNEL_REGISTER failed for Channel ID %d\n", channel_id);
 			return IPC_IOCTL_FAIL;
 		}
 		/* Store the received MSI Value */
-		ch->msi_value = ch_args.msi_value;
+		ch->msi_value = efd_args.msi_value;
 		ch->msi_valid = 1;
-		printf("got MSI %d for Channel ID %d\n", ch_args.msi_value, channel_id);
+		printf("got MSI %d for Channel ID %d\n", efd_args.msi_value, channel_id);
 
 	} else {
 		ipc_priv->channels[channel_id]->eventfd = -1;

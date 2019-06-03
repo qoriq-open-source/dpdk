@@ -23,6 +23,7 @@
 #include <rte_bus_vdev.h>
 #include <rte_rawdev.h>
 #include <rte_malloc.h>
+#include <rte_cycles.h>
 
 #include <rte_pmd_geul_ipc_rawdev.h>
 #include <geul_ipc_api.h>
@@ -596,11 +597,11 @@ parse_ch_mask(const char *ch_mask)
 static void
 usage(char *prgname)
 {
-	fprintf(stderr, "Usage: %s [EAL args] -- [-t TIMES] [-c CH_MASK]"
+	fprintf(stderr, "Usage: %s [EAL args] -- [-t TIMES] [-e CH_MASK]"
 			"          [-m MODE]\n"
 			"-t TIMES: number of a times the serialized test is"
 			"          run (default 1)\n"
-			"-c CH_MASK: Mask for Event enabled channels"
+			"-e CH_MASK: Mask for Event enabled channels\n"
 			"-m MODE : Mode of running:\n"
 			"          0 - Verification (default)\n"
 			"          1 - Performance (not implemented)\n",
@@ -613,7 +614,7 @@ parse_args(int argc, char **argv)
 	int opt;
 	int mode;
 
-	while ((opt = getopt(argc, argv, "t:c:m:h")) != -1) {
+	while ((opt = getopt(argc, argv, "t:e:m:h")) != -1) {
 		switch (opt) {
 		case 'h':
 			usage(argv[0]);
@@ -631,7 +632,7 @@ parse_args(int argc, char **argv)
 			}
 			ipc_debug("Argument: Parsed TIMES = %d\n", cycle_times);
 			break;
-		case 'c':
+		case 'e':
 			int_enabled_ch_mask = parse_ch_mask(optarg);
 			if (int_enabled_ch_mask == -1) {
 				printf("Invalid channel mask\n");
@@ -944,10 +945,6 @@ receiver_poll(void *arg __rte_unused)
 	int ret = 1, i;
 	ipc_t instance;
 
-	if (!arg) {
-		printf("Invalid call to Receive thread without args\n");
-		return -1;
-	}
 	instance  = (ipc_t)arg;
 
 	printf(" --> Starting Receiver (Poll Mode) (lcore_id=%u)\n", rte_lcore_id());
@@ -1028,10 +1025,11 @@ receiver_poll(void *arg __rte_unused)
 			break;
 	}
 
-	ipc_debug(" --------- Quiting receiver Poll thread\n");
+	ipc_debug(" --------- Quiting receiver Poll Mode\n");
 
 	return ret;
 }
+
 
 static int
 receiver_event(void *arg __rte_unused)
@@ -1040,25 +1038,25 @@ receiver_event(void *arg __rte_unused)
 	ipc_t instance;
 	struct epoll_event events[CHANNELS_MAX];
 	geulipc_channel_t *ch = NULL;
+	uint64_t timeout_ms = 1000 * 2; /* 2 Sec */
 
-	if (!arg) {
-		printf("Invalid call to Receive thread without args\n");
-		return -1;
-	}
 	instance  = (ipc_t)arg;
-
-	printf(" --> Starting Receiver (Event Mode) (lcore_id=%u)\n", rte_lcore_id());
+	ipc_debug(" --> Starting Receiver (Event Mode) (lcore_id=%u)\n", rte_lcore_id());
 
 	for (;;) {
-		nfds = epoll_wait(epoll_fd, events, 1, -1);
+		nfds = epoll_wait(epoll_fd, events, CHANNELS_MAX, timeout_ms);
 		if (nfds < 0) {
 			if (errno == EINTR)
 				continue;
-			printf("epoll_wait return fail\n");
+			ipc_debug("epoll_wait return fail\n");
 			return -1;
 		} else if (0 == nfds) {
 			ipc_debug("epoll wait timeout...\n");
-			continue;
+			if (force_quit) {
+				ipc_debug("%s: Quiting.....\n",__func__);
+				break;
+			} else
+				continue;
 		}
 		for (i = 0; i < nfds; i++) {
 			ch = (geulipc_channel_t *) events[i].data.ptr;
@@ -1066,7 +1064,7 @@ receiver_event(void *arg __rte_unused)
 
 			ret = _recv(ch->mp, ch->channel_id, instance);
 			if (ret) {
-				printf("Unable to recv msg on channel Id %d ret %d\n", ch->channel_id, ret);
+				ipc_debug("Unable to recv msg on channel Id %d ret %d\n", ch->channel_id, ret);
 				fill_stats(&ch->host_stats, 0, 0, ch->mp->elt_size, ret);
 			}
 			fill_stats(&ch->host_stats, 1, 0, ch->mp->elt_size, ret);
@@ -1076,9 +1074,33 @@ receiver_event(void *arg __rte_unused)
 			break;
 	}
 
-	ipc_debug(" -------- Quiting receiver Event thread\n");
+	ipc_debug(" -------- Quiting receiver Event Mode\n");
 
 	return ret;
+}
+static int
+receiver(void *arg __rte_unused)
+{
+	int ret = 1;
+
+	if (!arg) {
+		ipc_debug("Invalid call to Receive thread without args\n");
+		return -1;
+	}
+	/* first Check if any channel/s need Polling then process them first */
+	ret = receiver_poll (arg);
+	if (ret  < 0)
+		goto err;
+	/* Now move to Event Mode */
+	ret = receiver_event (arg);
+	if (ret  < 0)
+		goto err;
+
+	return ret;
+
+err:
+	ipc_debug("Receiver thread Failed...Quiting\n");
+	return -1;
 }
 
 static void
@@ -1139,6 +1161,9 @@ main(int argc, char **argv)
 	if (ret < 0)
 		rte_panic("[%s] Cannot init EAL\n", argv[0]);
 
+	argc -= ret;
+	argv += ret;
+
 	force_quit = 0;
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
@@ -1198,15 +1223,14 @@ main(int argc, char **argv)
 	printf(" \tPrint * : Receiver is waiting\n");
 	printf("=-=-=-=-=--=-==-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-\n");
 
-#define NON_RT_CORE  1
-#define RT_CORE      2
-#define RECV_CORE    3
-#define STATS_CORE   4
+#define NON_RT_CORE	1
+#define RT_CORE		2
+#define RECV_CORE	3
+//#define STATS_CORE   4
 
 	rte_eal_remote_launch(non_rt_sender, instance_handle, NON_RT_CORE);
 	rte_eal_remote_launch(rt_sender, instance_handle, RT_CORE);
-	rte_eal_remote_launch(receiver_poll, instance_handle, RECV_CORE);
-	rte_eal_remote_launch(receiver_event, instance_handle, RECV_CORE);
+	rte_eal_remote_launch(receiver, instance_handle, RECV_CORE);
 
 	rte_eal_mp_wait_lcore();
 
