@@ -968,7 +968,7 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 			perror("Eventfd allocation Failed: ");
 			return IPC_EVENTFD_FAIL;
 		}
-		printf("Eventfd %d for Channel ID %d\n", event_fd, channel_id);
+		PR("Eventfd %d for Channel ID %d\n", event_fd, channel_id);
 		ipc_priv->channels[channel_id]->eventfd = event_fd;
 
 		/* Send IOCTL to register this event_fd with kernel*/
@@ -982,7 +982,7 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 		/* Store the received MSI Value */
 		ch->msi_value = efd_args.msi_value;
 		ch->msi_valid = 1;
-		printf("got MSI %d for Channel ID %d\n", efd_args.msi_value, channel_id);
+		PR("got MSI %d for Channel ID %d\n", efd_args.msi_value, channel_id);
 
 	} else {
 		ipc_priv->channels[channel_id]->eventfd = -1;

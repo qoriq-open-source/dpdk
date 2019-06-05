@@ -32,8 +32,8 @@
 #include <gul_host_if.h>
 #define UNUSED(x) void(x)
 
-#define ipc_debug(...) printf(__VA_ARGS__)
-//#define ipc_debug(...)
+//#define ipc_debug(...) printf(__VA_ARGS__)
+#define ipc_debug(...)
 
 #define GEUL_DEVICE_ID "0"
 #define GEUL_DEVICE_SEP "_"
@@ -77,6 +77,7 @@ struct geulipc_channel *channels[CHANNELS_MAX];
 int32_t epoll_fd;
 /* mask of event (interrupt) enabled channels */
 int32_t int_enabled_ch_mask;
+int32_t max_events = 0;
 
 /* Signal control */
 static uint8_t force_quit;
@@ -472,7 +473,6 @@ initialize_channels(ipc_t instance __rte_unused)
 		/* Store the Event FD if events are required */
 		if (en_event) {
 			ch->eventfd = ipc_get_eventfd(ch->channel_id, instance);
-			ipc_debug("Got Event fd (%d)\n", ch->eventfd);
 			/* Register the event */
 			epoll_ev.events = EPOLLIN | EPOLLET;
 			epoll_ev.data.ptr = (void *)ch;
@@ -482,6 +482,8 @@ initialize_channels(ipc_t instance __rte_unused)
 								ch->channel_id);
 				goto cleanup;
 			}
+			max_events++;
+			ipc_debug("Got Event fd (%d)  max_events %d\n", ch->eventfd, max_events);
 		} else
 			ch->eventfd = -1;
 	}
@@ -805,15 +807,15 @@ repeat:
 		/* Buffer is valid, and no error */
 		ret = validate_buffer((void *)validate_buf,
 				      buffer.data_size);
+		if (!buffer.data_size) {
+			ipc_debug("WARN: Received %d len in _recv_ptr\n", buffer.data_size);
+		}
 		ipc_put_buf(channel_id, &buffer, instance);
 		if (ret) {
 			printf("Invalid buffer in recv_ptr (ret=%d)\n", ret);
 			/* XXX Increase stats */
 			err = ret;
 			goto out;
-		}
-		if (!buffer.data_size) {
-			ipc_debug("WARN: Received %d len in _recv_ptr\n", buffer.data_size);
 		}
 	}
 
@@ -1025,7 +1027,7 @@ receiver_poll(void *arg __rte_unused)
 			break;
 	}
 
-	ipc_debug(" --------- Quiting receiver Poll Mode\n");
+	printf(" --------- Quiting receiver Poll Mode\n");
 
 	return ret;
 }
@@ -1034,24 +1036,26 @@ receiver_poll(void *arg __rte_unused)
 static int
 receiver_event(void *arg __rte_unused)
 {
-	int ret = 1, i, nfds;
+	int ret = 0, i, nfds;
 	ipc_t instance;
 	struct epoll_event events[CHANNELS_MAX];
 	geulipc_channel_t *ch = NULL;
 	uint64_t timeout_ms = 1000 * 2; /* 2 Sec */
 
 	instance  = (ipc_t)arg;
-	ipc_debug(" --> Starting Receiver (Event Mode) (lcore_id=%u)\n", rte_lcore_id());
+	printf(" --> Starting Receiver (Event Mode) (lcore_id=%u)\n", rte_lcore_id());
 
 	for (;;) {
-		nfds = epoll_wait(epoll_fd, events, CHANNELS_MAX, timeout_ms);
+		nfds = epoll_wait(epoll_fd, events, max_events, timeout_ms);
 		if (nfds < 0) {
 			if (errno == EINTR)
 				continue;
-			ipc_debug("epoll_wait return fail\n");
+			else if (errno == EINVAL) /* No FDs left */
+				goto done;
+			ipc_debug("epoll_wait return fail %d \n", errno);
 			return -1;
 		} else if (0 == nfds) {
-			ipc_debug("epoll wait timeout...\n");
+			/*ipc_debug("epoll wait timeout...\n");*/
 			if (force_quit) {
 				ipc_debug("%s: Quiting.....\n",__func__);
 				break;
@@ -1062,19 +1066,29 @@ receiver_event(void *arg __rte_unused)
 			ch = (geulipc_channel_t *) events[i].data.ptr;
 			ipc_debug("Got event for Channel Id %d\n", ch->channel_id);
 
-			ret = _recv(ch->mp, ch->channel_id, instance);
+			if (ch->channel_id < L1_TO_L2_PRT_CH_1)
+				ret = _recv(ch->mp, ch->channel_id, instance);
+			else
+				ret = _recv_ptr(ch->mp, ch->channel_id, instance);
 			if (ret) {
 				ipc_debug("Unable to recv msg on channel Id %d ret %d\n", ch->channel_id, ret);
 				fill_stats(&ch->host_stats, 0, 0, ch->mp->elt_size, ret);
 			}
 			fill_stats(&ch->host_stats, 1, 0, ch->mp->elt_size, ret);
+
+			if (ch->host_stats.num_of_msg_recved == (uint32_t)cycle_times) {
+				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, ch->eventfd, NULL);
+				max_events--;
+				if (0 == max_events)
+					goto done;
+			}
 		}
 
 		if (force_quit)
 			break;
 	}
-
-	ipc_debug(" -------- Quiting receiver Event Mode\n");
+done:
+	printf(" -------- Quiting receiver Event Mode\n");
 
 	return ret;
 }
