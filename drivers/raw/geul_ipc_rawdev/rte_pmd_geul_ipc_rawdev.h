@@ -41,6 +41,7 @@ typedef struct geulipc_channel {
 	char name[CHANNEL_NAME_LEN];
 	uint16_t depth;	/**< Depth of the channel, for PTR channel case */
 	uint32_t channel_id;	/**< Channel ID */
+	int32_t eventfd;	/**< Event FD value */
 	enum ipc_ch_type type;  /**< Channel type */
 	struct rte_mempool *mp; /**< Pool from where buffers would be cut */
 	struct gul_ipc_stats *modem_stats; /**< Stats for modem (HIF) */

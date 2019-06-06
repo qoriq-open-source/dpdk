@@ -33,6 +33,8 @@
 
 #define GUL_IPC_DEVNAME_PREFIX  "gulipc"
 
+#define MAX_TTI_COUNT	2	/* Number of TTI instances */
+
 enum gul_ipc_flags {
 	GUL_IPC_NONBLOCK = 0,
 	GUL_IPC_BLOCK,
@@ -48,7 +50,10 @@ struct ipc_msg {
 #define GUL_IPC_MAGIC	'R'
 
 #define IOCTL_GUL_IPC_GET_SYS_MAP		_IOW(GUL_IPC_MAGIC, 1, struct ipc_msg *)
-#define IOCTL_GUL_IPC_REGISTER_SIGNAL	_IOWR(GUL_IPC_MAGIC, 2, struct ipc_msg *)
+#define IOCTL_GUL_IPC_MODEM_TTI_REGISTER	_IOWR(GUL_IPC_MAGIC, 2, struct ipc_msg *)
+#define IOCTL_GUL_IPC_MODEM_TTI_DEREGISTER	_IOWR(GUL_IPC_MAGIC, 3, struct ipc_msg *)
+#define IOCTL_GUL_IPC_CHANNEL_REGISTER		_IOWR(GUL_IPC_MAGIC, 4, struct ipc_msg *)
+#define IOCTL_GUL_IPC_CHANNEL_DEREGISTER	_IOWR(GUL_IPC_MAGIC, 5, struct ipc_msg *)
 
 typedef struct {
         uint64_t host_phys;
@@ -62,5 +67,25 @@ typedef struct {
         mem_strt_addr_t         mhif_start; /* MHIF meta daat */
         mem_strt_addr_t         hugepg_start; /* create outbound for Modem to access hugepage */
 } sys_map_t;
+
+typedef struct tti {
+	uint32_t	efd;
+	uint32_t	ttid;
+	uint32_t	dev_ipc_handle;
+} tti_t;
+
+typedef struct tti_priv {
+	int irq;
+	int tti_id;
+	uint64_t tti_count;
+	/* TBD Timestamp; */
+	struct eventfd_ctx *efd_ctx;
+} tti_priv_t;
+
+typedef struct ipc_eventfd {
+	uint32_t	efd;
+	uint32_t	ipc_channel_num;
+	uint32_t	msi_value;
+} ipc_eventfd_t;
 
 #endif /*__GUL_IPC_IOCTL__*/

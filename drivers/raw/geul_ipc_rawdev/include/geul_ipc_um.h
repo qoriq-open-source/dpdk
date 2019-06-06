@@ -19,10 +19,9 @@
 #endif
 
 typedef struct ipc_channel_us_priv {
-        void            *msg_ring_vaddr; /* TODO not sure how to use */
-        ipc_cbfunc_t    cbfunc;
-        uint32_t        signal;
-        uint32_t        channel_id;
+	void		*msg_ring_vaddr; /* TODO not sure how to use */
+	int32_t		eventfd;
+	uint32_t	channel_id;
 } ipc_channel_us_t;
 
 typedef struct ipc_priv_t {

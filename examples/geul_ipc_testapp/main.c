@@ -10,6 +10,8 @@
 #include <sys/queue.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
 #include <sys/syscall.h>
 
 #include <rte_memory.h>
@@ -21,6 +23,7 @@
 #include <rte_bus_vdev.h>
 #include <rte_rawdev.h>
 #include <rte_malloc.h>
+#include <rte_cycles.h>
 
 #include <rte_pmd_geul_ipc_rawdev.h>
 #include <geul_ipc_api.h>
@@ -28,6 +31,7 @@
 #include <geul_ipc_um.h>
 #include <gul_host_if.h>
 #define UNUSED(x) void(x)
+
 //#define ipc_debug(...) printf(__VA_ARGS__)
 #define ipc_debug(...)
 
@@ -68,6 +72,12 @@ uint8_t test_mode = VERIFICATION;
  */
 struct rte_mempool *pools[IPC_HOST_BUF_MAX_COUNT];
 struct geulipc_channel *channels[CHANNELS_MAX];
+
+/* Epoll Fd */
+int32_t epoll_fd;
+/* mask of event (interrupt) enabled channels */
+int32_t int_enabled_ch_mask;
+int32_t max_events = 0;
 
 /* Signal control */
 static uint8_t force_quit;
@@ -297,7 +307,7 @@ create_mempools(void)
 				break;
 			case IPC_HOST_BUF_POOLSZ_SH_BUF:
 				elem_size = sizeof(ipc_sh_buf_t);
-				elem_count = SH_POOL_COUNT; 
+				elem_count = SH_POOL_COUNT;
 				break;
 			default:
 				printf("Invalid size of mempool specified:"
@@ -348,6 +358,8 @@ initialize_channels(ipc_t instance __rte_unused)
 	struct gul_hif *hif_start = NULL;
 	geulipc_channel_t *ch = NULL;
 	ipc_userspace_t *ipcu;
+	uint8_t en_event = 0;
+	struct epoll_event epoll_ev;
 
 	if (!instance) {
 		printf("Invalid instance handle\n");
@@ -446,16 +458,34 @@ initialize_channels(ipc_t instance __rte_unused)
 			goto cleanup;
 		}
 
-		ipc_debug("Calling configure channel for (%d)\n", ch->channel_id);
+		en_event = (int_enabled_ch_mask & (1 << ch->channel_id));
+		ipc_debug("Configuring channel (%d) with en_event %d\n",
+						ch->channel_id, en_event);
 		/* Call ipc_configure_channel */
 		ret = ipc_configure_channel(ch->channel_id, ch->depth,
 					    ch->type, ch->mp->elt_size,
-					    NULL, instance);
+					    en_event, instance);
 		if (ret) {
 			printf("Unable to configure channel (%d) (err=%d)\n",
 			       i, ret);
 			goto cleanup;
 		}
+		/* Store the Event FD if events are required */
+		if (en_event) {
+			ch->eventfd = ipc_get_eventfd(ch->channel_id, instance);
+			/* Register the event */
+			epoll_ev.events = EPOLLIN | EPOLLET;
+			epoll_ev.data.ptr = (void *)ch;
+			ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ch->eventfd, &epoll_ev);
+			if (ret < 0) {
+				printf("epoll_ctl ADD failed for Channel ID %d\n",
+								ch->channel_id);
+				goto cleanup;
+			}
+			max_events++;
+			ipc_debug("Got Event fd (%d)  max_events %d\n", ch->eventfd, max_events);
+		} else
+			ch->eventfd = -1;
 	}
 	return ret;
 
@@ -511,6 +541,12 @@ setup_ipc(uint16_t devid)
 		goto err_out;
 	}
 
+	/* Create an epoll Fd */
+	epoll_fd = epoll_create(1);
+	if (epoll_fd < 0) {
+		printf("--->Error in creating epoll fd\n");
+		goto err_out;
+	}
 	/* Create the channels and get their IDs */
 	ret = initialize_channels(handle);
 	if (ret || !channels[0]) {
@@ -546,13 +582,28 @@ err_out:
 	return handle;
 }
 
+static int
+parse_ch_mask(const char *ch_mask)
+{
+	char *end = NULL;
+	unsigned long mask;
+
+	/* parse hexadecimal string */
+	mask = strtoul(ch_mask, &end, 16);
+	if ((ch_mask[0] == '\0') || (end == NULL) || (*end != '\0'))
+		return 0;
+
+	return mask;
+}
+
 static void
 usage(char *prgname)
 {
-	fprintf(stderr, "Usage: %s [EAL args] -- [-t TIMES] "
+	fprintf(stderr, "Usage: %s [EAL args] -- [-t TIMES] [-e CH_MASK]"
 			"          [-m MODE]\n"
 			"-t TIMES: number of a times the serialized test is"
 			"          run (default 1)\n"
+			"-e CH_MASK: Mask for Event enabled channels\n"
 			"-m MODE : Mode of running:\n"
 			"          0 - Verification (default)\n"
 			"          1 - Performance (not implemented)\n",
@@ -565,7 +616,7 @@ parse_args(int argc, char **argv)
 	int opt;
 	int mode;
 
-	while ((opt = getopt(argc, argv, "t:m:h")) != -1) {
+	while ((opt = getopt(argc, argv, "t:e:m:h")) != -1) {
 		switch (opt) {
 		case 'h':
 			usage(argv[0]);
@@ -582,6 +633,14 @@ parse_args(int argc, char **argv)
 				cycle_times = 1;
 			}
 			ipc_debug("Argument: Parsed TIMES = %d\n", cycle_times);
+			break;
+		case 'e':
+			int_enabled_ch_mask = parse_ch_mask(optarg);
+			if (int_enabled_ch_mask == -1) {
+				printf("Invalid channel mask\n");
+				return -1;
+			}
+			ipc_debug("Argument: int_enabled_ch_mask = 0x%X\n", int_enabled_ch_mask);
 			break;
 		case 'm':
 			if (!optarg) {
@@ -748,15 +807,15 @@ repeat:
 		/* Buffer is valid, and no error */
 		ret = validate_buffer((void *)validate_buf,
 				      buffer.data_size);
+		if (!buffer.data_size) {
+			ipc_debug("WARN: Received %d len in _recv_ptr\n", buffer.data_size);
+		}
 		ipc_put_buf(channel_id, &buffer, instance);
 		if (ret) {
 			printf("Invalid buffer in recv_ptr (ret=%d)\n", ret);
 			/* XXX Increase stats */
 			err = ret;
 			goto out;
-		}
-		if (!buffer.data_size) {
-			ipc_debug("WARN: Received %d len in _recv_ptr\n", buffer.data_size);
 		}
 	}
 
@@ -883,22 +942,19 @@ rt_sender(void *arg)
 	return ret;
 }
 static int
-receiver(void *arg __rte_unused)
+receiver_poll(void *arg __rte_unused)
 {
 	int ret = 1, i;
 	ipc_t instance;
 
-	if (!arg) {
-		printf("Invalid call to Receive thread without args\n");
-		return -1;
-	}
 	instance  = (ipc_t)arg;
 
-	printf(" --> Starting Receiver (lcore_id=%u)\n", rte_lcore_id());
+	printf(" --> Starting Receiver (Poll Mode) (lcore_id=%u)\n", rte_lcore_id());
 
 	/* XXX Loop on cycle_times */
 	for (i = 0; i < cycle_times; i++) {
 		/* For the L1_TO_L2_MSG_CH_4 */
+		if (channels[L1_TO_L2_MSG_CH_4]->eventfd < 0) {
 		ipc_debug("loop for _recv L1_TO_L2_MSG_CH_4\n");
 
 		ret = _recv(channels[L1_TO_L2_MSG_CH_4]->mp,
@@ -913,7 +969,9 @@ receiver(void *arg __rte_unused)
 		fill_stats(&channels[L1_TO_L2_MSG_CH_4]->host_stats, 1, 0,
 			   channels[L1_TO_L2_MSG_CH_4]->mp->elt_size,
 			   ret);
+		}
 
+		if (channels[L1_TO_L2_MSG_CH_5]->eventfd < 0) {
 		ipc_debug("loop for _recv L1_TO_L2_MSG_CH_5\n");
 		/* For the L1_TO_L2_MSG_CH_5 */
 		ret = _recv(channels[L1_TO_L2_MSG_CH_5]->mp,
@@ -928,7 +986,9 @@ receiver(void *arg __rte_unused)
 		fill_stats(&channels[L1_TO_L2_MSG_CH_5]->host_stats, 1, 0,
 			   channels[L1_TO_L2_MSG_CH_5]->mp->elt_size,
 			   ret);
+		}
 
+		if (channels[L1_TO_L2_PRT_CH_1]->eventfd < 0) {
 		ipc_debug("loop for _recv L1_TO_L2_PRT_CH_1\n");
 		/* For the L1_TO_L2_PRT_CH_1 */
 		ret = _recv_ptr(channels[L1_TO_L2_PRT_CH_1]->mp,
@@ -943,8 +1003,10 @@ receiver(void *arg __rte_unused)
 		fill_stats(&channels[L1_TO_L2_PRT_CH_1]->host_stats, 1, 0,
 			   channels[L1_TO_L2_PRT_CH_1]->mp->elt_size,
 			   ret);
+		}
 
 #if 0	/* PTR Channel 2 is not supported in this release */
+		if (channels[L1_TO_L2_PRT_CH_2]->eventfd < 0) {
 		/* For the L1_TO_L2_PRT_CH_2 */
 		ret = _recv_ptr(channels[L1_TO_L2_PRT_CH_2]->mp,
 				channels[L1_TO_L2_PRT_CH_2]->channel_id,
@@ -959,14 +1021,100 @@ receiver(void *arg __rte_unused)
 		fill_stats(&channels[L1_TO_L2_PRT_CH_2]->host_stats, 1, 0,
 				channels[L1_TO_L2_PRT_CH_2]->mp->elt_size,
 				ret);
+		}
 #endif
 		if (force_quit)
 			break;
 	}
 
-	ipc_debug("Quiting receiver thread\n");
+	printf(" --------- Quiting receiver Poll Mode\n");
 
 	return ret;
+}
+
+
+static int
+receiver_event(void *arg __rte_unused)
+{
+	int ret = 0, i, nfds;
+	ipc_t instance;
+	struct epoll_event events[CHANNELS_MAX];
+	geulipc_channel_t *ch = NULL;
+	uint64_t timeout_ms = 1000 * 2; /* 2 Sec */
+
+	instance  = (ipc_t)arg;
+	printf(" --> Starting Receiver (Event Mode) (lcore_id=%u)\n", rte_lcore_id());
+
+	for (;;) {
+		nfds = epoll_wait(epoll_fd, events, max_events, timeout_ms);
+		if (nfds < 0) {
+			if (errno == EINTR)
+				continue;
+			else if (errno == EINVAL) /* No FDs left */
+				goto done;
+			ipc_debug("epoll_wait return fail %d \n", errno);
+			return -1;
+		} else if (0 == nfds) {
+			/*ipc_debug("epoll wait timeout...\n");*/
+			if (force_quit) {
+				ipc_debug("%s: Quiting.....\n",__func__);
+				break;
+			} else
+				continue;
+		}
+		for (i = 0; i < nfds; i++) {
+			ch = (geulipc_channel_t *) events[i].data.ptr;
+			ipc_debug("Got event for Channel Id %d\n", ch->channel_id);
+
+			if (ch->channel_id < L1_TO_L2_PRT_CH_1)
+				ret = _recv(ch->mp, ch->channel_id, instance);
+			else
+				ret = _recv_ptr(ch->mp, ch->channel_id, instance);
+			if (ret) {
+				ipc_debug("Unable to recv msg on channel Id %d ret %d\n", ch->channel_id, ret);
+				fill_stats(&ch->host_stats, 0, 0, ch->mp->elt_size, ret);
+			}
+			fill_stats(&ch->host_stats, 1, 0, ch->mp->elt_size, ret);
+
+			if (ch->host_stats.num_of_msg_recved == (uint32_t)cycle_times) {
+				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, ch->eventfd, NULL);
+				max_events--;
+				if (0 == max_events)
+					goto done;
+			}
+		}
+
+		if (force_quit)
+			break;
+	}
+done:
+	printf(" -------- Quiting receiver Event Mode\n");
+
+	return ret;
+}
+static int
+receiver(void *arg __rte_unused)
+{
+	int ret = 1;
+
+	if (!arg) {
+		ipc_debug("Invalid call to Receive thread without args\n");
+		return -1;
+	}
+	/* first Check if any channel/s need Polling then process them first */
+	ret = receiver_poll (arg);
+	if (ret  < 0)
+		goto err;
+	/* Now move to Event Mode */
+	ret = receiver_event (arg);
+	if (ret  < 0)
+		goto err;
+
+	return ret;
+
+err:
+	ipc_debug("Receiver thread Failed...Quiting\n");
+	return -1;
 }
 
 static void
@@ -1027,9 +1175,15 @@ main(int argc, char **argv)
 	if (ret < 0)
 		rte_panic("[%s] Cannot init EAL\n", argv[0]);
 
+	argc -= ret;
+	argv += ret;
+
 	force_quit = 0;
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
+
+	/* Set Event based rcv mode as default */
+	int_enabled_ch_mask = 0x78;
 
 	ret = parse_args(argc, argv);
 	if (ret < 0)
@@ -1083,10 +1237,10 @@ main(int argc, char **argv)
 	printf(" \tPrint * : Receiver is waiting\n");
 	printf("=-=-=-=-=--=-==-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-\n");
 
-#define NON_RT_CORE  1
-#define RT_CORE      2
-#define RECV_CORE    3
-#define STATS_CORE   4
+#define NON_RT_CORE	1
+#define RT_CORE		2
+#define RECV_CORE	3
+//#define STATS_CORE   4
 
 	rte_eal_remote_launch(non_rt_sender, instance_handle, NON_RT_CORE);
 	rte_eal_remote_launch(rt_sender, instance_handle, RT_CORE);
@@ -1103,5 +1257,8 @@ cleanup_vdev:
 	/* Ignoring any errors from rte_vdev_uninit*/
 
 err_cleanup:
+	if (epoll_fd >= 0)
+		close(epoll_fd);
+
 	return ret;
 }

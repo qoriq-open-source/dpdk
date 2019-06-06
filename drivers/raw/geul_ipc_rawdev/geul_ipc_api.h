@@ -193,13 +193,8 @@ int ipc_shutdown(void *);
  * For PTR_CH, msg_ring_vaddr, msg_ring_paddr, msg_size
  * are all NULL. Required only for IPC_MSG_CH
  *
- * cbfunc - [IN]The callback function called on receiving interrupt
- * from the producer. If cbfunc is NULL, channel does not
- * support notifications.
- *
- * The channel supports the notification using interrupts
- * The ipc layer will find a free rt signal for process
- * and attach the signal with the interrupt.
+ * en_event - [IN] indicate whether event notification support
+ * is need to be enabled or not on this channel
  *
  * The kernel mode component of ipc will find a free irq
  * and attach to the channel structure in the shared ctrl
@@ -215,8 +210,22 @@ int ipc_configure_channel(uint32_t channel_id,
 		uint32_t depth,
 		ipc_ch_type_t channel_type,
 		uint32_t msg_size,
-		ipc_cbfunc_t cbfunc,
+		uint8_t en_event,
 		ipc_t instance);
+
+/*****************************************************************************
+ * @ipc_get_eventfd called to get eventfd value associated with the given Channel
+ * API should be called by Consumer of channel.
+ * channel_id - [IN][M]unique id of the channel
+ *
+ * instance - [IN][M] - ipc handle
+ *
+ * Return Value
+ * eventfd value - on Success
+ * -1 - on Failure
+ *
+ ****************************************************************************/
+int32_t ipc_get_eventfd(uint32_t channel_id, ipc_t instance);
 
 /** This is called to attach the buffers from DPDK to IPC PTR channel
  *  Only HOST will call this

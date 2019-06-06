@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/eventfd.h>
 #include <sys/ioctl.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -57,7 +58,7 @@ mem_range_t chvpaddr_arr[IPC_MAX_INSTANCE_COUNT][IPC_MAX_CHANNEL_COUNT];
 #define HOST_RANGE_V(x) \
 	(((uint64_t)(x) < (uint64_t)ipc_priv->hugepg_start.host_vaddr || \
 	  (uint64_t)(x) > ((uint64_t)ipc_priv->hugepg_start.host_vaddr \
-	  + ipc_priv->hugepg_start.size)) == 1 ? 1 : 0) 
+	  + ipc_priv->hugepg_start.size)) == 1 ? 1 : 0)
 
 #define HUGEPG_OFFSET(A) \
 		((uint64_t) ((unsigned long) (A) \
@@ -186,7 +187,7 @@ static inline void ipc_mark_channel_as_configured(uint32_t channel_id, ipc_insta
 int ipc_is_channel_configured(uint32_t channel_id, ipc_t instance)
 {
 	ipc_userspace_t *ipc_priv = instance;
-	ipc_instance_t *ipc_instance = ipc_priv->instance; 
+	ipc_instance_t *ipc_instance = ipc_priv->instance;
 	PR("here %s %d\n \n \n", __func__, __LINE__);
 
 	/* Validate channel id */
@@ -206,12 +207,12 @@ int ipc_get_list_of_configured_channel(ipc_bitmask_t list[], ipc_t instance)
 {
 	uint32_t i;
 	ipc_userspace_t *ipc_priv = instance;
-	ipc_instance_t *ipc_instance = ipc_priv->instance; 
+	ipc_instance_t *ipc_instance = ipc_priv->instance;
 
 	/* Validate instance*/
 	if (!ipc_instance || !(ipc_instance->initialized))
 		return IPC_INSTANCE_INVALID;
-	
+
 	/* Fill masks from metadata to the argument list */
 	for (i = 0; i < IPC_BITMASK_ARRAY_SIZE; i++)
 		list[i] = ipc_instance->cfgmask[i];
@@ -255,7 +256,7 @@ int ipc_put_buf(uint32_t channel_id, ipc_sh_buf_t *buf_to_free, ipc_t instance)
 {
 	pr_debug("here %s %d\n \n \n", __func__, __LINE__);
 	ipc_userspace_t *ipc_priv = instance;
-	ipc_instance_t *ipc_instance = ipc_priv->instance; 
+	ipc_instance_t *ipc_instance = ipc_priv->instance;
 	ipc_ch_t *ch;
 	ipc_br_md_t *md;
 	uint32_t ring_size, pi, ci, cc, pc;
@@ -275,7 +276,7 @@ int ipc_put_buf(uint32_t channel_id, ipc_sh_buf_t *buf_to_free, ipc_t instance)
 	range = join_va2_64(sh->host_virt_h, sh->host_virt_l);
 	if (HOST_RANGE_V(range))
 		return IPC_INPUT_INVALID;
-	
+
 	ch = &(ipc_instance->ch_list[channel_id]);
 #if DONOT_CHECK
 	if (!ipc_is_channel_configured(channel_id, ipc_priv) ||
@@ -424,7 +425,7 @@ int ipc_send_msg(uint32_t channel_id,
 	return IPC_SUCCESS;
 }
 
-/* 
+/*
  * PTR channel is used to transfer RX TB from modem to host.
  * So this API will only be used by host to receive RX TB.
  */
@@ -432,7 +433,7 @@ int ipc_recv_ptr(uint32_t channel_id, void *dst, ipc_t instance)
 {
 	PR("here %s %d\n \n \n", __func__, __LINE__);
 	ipc_userspace_t *ipc_priv = instance;
-	ipc_instance_t *ipc_instance = ipc_priv->instance; 
+	ipc_instance_t *ipc_instance = ipc_priv->instance;
 	ipc_ch_t *ch;
 	ipc_br_md_t *md;
 	uint32_t cc, pc, ring_size, pi, ci, msg_len;
@@ -451,7 +452,7 @@ int ipc_recv_ptr(uint32_t channel_id, void *dst, ipc_t instance)
 
 	if (channel_id >= IPC_MAX_CHANNEL_COUNT) {
 		return IPC_CH_INVALID;
-	}	
+	}
 
 	ch = &(ipc_instance->ch_list[channel_id]);
 #if DONOT_CHECK
@@ -600,7 +601,7 @@ int ipc_recv_msg_ptr(uint32_t channel_id, void **dst_buffer,
 	md = &(ch->br_msg_desc.md);
 	if (ipc_is_bd_ring_empty(md))
 		return IPC_CH_EMPTY;
-	
+
 	ci = md->ci;
 	pi = md->pi;
 	cc = md->cc;
@@ -714,7 +715,8 @@ ipc_t ipc_host_init(uint32_t instance_id,
 {
 	PR("Amit:1");
 	ipc_userspace_t *ipc_priv;
-	int ret, dev_ipc, dev_mem;
+	ipc_channel_us_t *ipc_priv_ch;
+	int ret, dev_ipc, dev_mem, i;
 	ipc_metadata_t *ipc_md;
 	struct gul_hif *mhif;
 	uint32_t phy_align = 0;
@@ -725,15 +727,21 @@ ipc_t ipc_host_init(uint32_t instance_id,
 		return NULL;
 	}
 	memset(ipc_priv, 0, sizeof(ipc_userspace_t));
-	
-	
 
+	for (i = 0; i < IPC_MAX_CHANNEL_COUNT; i++) {
+		ipc_priv_ch = malloc(sizeof(ipc_channel_us_t));
+		if (ipc_priv_ch == NULL) {
+			ipc_fill_errorcode(err, IPC_MALLOC_FAIL);
+			return NULL;
+		}
+		ipc_priv->channels[i] = ipc_priv_ch;
+	}
 	dev_mem = open_devmem();
 	if (dev_mem < 0) {
 		ipc_fill_errorcode(err, IPC_OPEN_FAIL);
 		return NULL;
 	}
-	
+
 	dev_ipc = open_devipc();
 	if (dev_ipc < 0) {
 		ipc_fill_errorcode(err, IPC_OPEN_FAIL);
@@ -743,7 +751,7 @@ ipc_t ipc_host_init(uint32_t instance_id,
 	ipc_priv->instance_id = instance_id;
 	ipc_priv->dev_ipc = dev_ipc;
 	ipc_priv->dev_mem = dev_mem;
-	
+
 	PR("hugepg input %lx %p %x\n", hugepgstart.host_phys , hugepgstart.host_vaddr, hugepgstart.size);
 
 	ipc_priv->sys_map.hugepg_start.host_phys = hugepgstart.host_phys;
@@ -792,12 +800,12 @@ ipc_t ipc_host_init(uint32_t instance_id,
 	ipc_priv->peb_start.host_phys = ipc_priv->sys_map.peb_start.host_phys;
 	ipc_priv->peb_start.size = ipc_priv->sys_map.peb_start.size;
 
-	/*These handle to be used create dpdk pool of 2K 16k and 128k */ 
-	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_2K] = rtemempool[0]; 
-	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_16K] = rtemempool[1]; 
-	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_128K] = rtemempool[2]; 
-	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_SH_BUF] = rtemempool[3]; 
-	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_R2] = rtemempool[4]; 
+	/*These handle to be used create dpdk pool of 2K 16k and 128k */
+	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_2K] = rtemempool[0];
+	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_16K] = rtemempool[1];
+	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_128K] = rtemempool[2];
+	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_SH_BUF] = rtemempool[3];
+	ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_R2] = rtemempool[4];
 
 	PR("peb %lx %p %x\n", ipc_priv->peb_start.host_phys , ipc_priv->peb_start.host_vaddr, ipc_priv->peb_start.size);
 	PR("hugepg %lx %p %x\n", ipc_priv->hugepg_start.host_phys , ipc_priv->hugepg_start.host_vaddr, ipc_priv->hugepg_start.size);
@@ -825,26 +833,12 @@ ipc_t ipc_host_init(uint32_t instance_id,
 		return NULL;
 	}
 #endif
-#if TBD
-	for (i = 0; i < IPC_MAX_CHANNEL_COUNT; i++) {
-		/* physical address is not needed as we get virtual directly */
-		//chvpaddr_arr[instance_id][i].host_phys = __get_channel_paddr(i, ipc_priv);
-		chvpaddr_arr[instance_id][i].vaddr = __get_channel_vaddr(i, ipc_priv);
-
-		vaddr = malloc(sizeof(ipc_channel_us_t));
-		if (vaddr == NULL) {
-			ipc_fill_errorcode(err, IPC_MALLOC_FAIL);
-			return NULL;
-		}
-		ipc_priv->channels[channel_id] = vaddr;
-	}
-#endif
 	PR("finish host init\n");
 	return ipc_priv;
 }
 
 int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t channel_type,
-		uint32_t msg_size, ipc_cbfunc_t cbfunc, ipc_t instance)
+		uint32_t msg_size, uint8_t en_event, ipc_t instance)
 {
 
 	ipc_userspace_t *ipc_priv = (ipc_userspace_t *)instance;
@@ -852,17 +846,8 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 	ipc_ch_t *ch;
 	void *vaddr;
 	uint32_t i = 0;
-	int ret;
-	if (cbfunc != NULL)
-		ipc_priv->channels[channel_id]->cbfunc = cbfunc;
-#if TBD
-	/* Send IOCTL to send sig and channel id */
-	ret = ioctl(dev_ipc, IOCTL_GUL_IPC_REGISTER_SIGNAL, struct chanel_id_sig);
-	if (ret) {
-		return IPC_IOCTL_FAIL;
+	int ret, event_fd;
 
-	}
-#endif
 	PR("%x %p\n", ipc_instance->initialized, ipc_priv->instance);
 	pr_debug("%s: channel: %u, depth: %u, type: %d, msg size: %u\r\n",
 			__func__, channel_id, depth, channel_type, msg_size);
@@ -889,10 +874,6 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 
 	/* Start init of channel */
 	ch->ch_type = channel_type;
-#if 0
-	if (cbfunc != NULL)
-		ch->event_cb = cbfunc;
-#endif
 	ch->ch_id = channel_id; /* May not be required since modem does this */
 #if 0
 	if (ch->bl_initialized == 1) {
@@ -908,7 +889,6 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 		ch->br_msg_desc.md.ci = 0;
 		ch->br_msg_desc.md.msg_size = msg_size;
 	//	ch->br_msg_desc.bd[i].len = 0; /* not sure use of this len */
-	PR("%d %s\n \n \n",__LINE__, __func__);
 		for (i = 0; i < depth; i++) {
 			if (msg_size == SIZE_2K) {
 				ret = rte_mempool_get(ipc_priv->rtemempool[IPC_HOST_BUF_POOLSZ_2K], &vaddr);
@@ -927,12 +907,9 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 	PR("%d %s vaddr %p\n \n \n",__LINE__, __func__, vaddr);
 			ch->br_msg_desc.bd[i].host_virt_l = SPLIT_VA32_L(vaddr);
 			ch->br_msg_desc.bd[i].host_virt_h = SPLIT_VA32_H(vaddr);
-	PR("%d %s\n \n \n",__LINE__, __func__);
 			ch->br_msg_desc.bd[i].len = 0; /* not sure use of this len may be for CRC*/
-	PR("%d %s\n \n \n",__LINE__, __func__);
 		}
 		ch->bl_initialized = 1;
-	PR("%d %s\n \n \n",__LINE__, __func__);
 	}
 
 	if (channel_type == IPC_CH_PTR) {
@@ -982,13 +959,47 @@ int ipc_configure_channel(uint32_t channel_id, uint32_t depth, ipc_ch_type_t cha
 		ch->bl_initialized = 1;
 	}
 
-	PR("%d %s\n \n \n",__LINE__, __func__);
+	if (en_event) {
+		ipc_eventfd_t efd_args;
+
+		/* Open an Event FD to get events from kernel.*/
+		event_fd = eventfd(0, EFD_NONBLOCK);
+		if (event_fd < 0) {
+			perror("Eventfd allocation Failed: ");
+			return IPC_EVENTFD_FAIL;
+		}
+		PR("Eventfd %d for Channel ID %d\n", event_fd, channel_id);
+		ipc_priv->channels[channel_id]->eventfd = event_fd;
+
+		/* Send IOCTL to register this event_fd with kernel*/
+		efd_args.efd = event_fd;
+		efd_args.ipc_channel_num = channel_id;
+		ret = ioctl(ipc_priv->dev_ipc, IOCTL_GUL_IPC_CHANNEL_REGISTER, &efd_args);
+		if (ret) {
+			printf("IPC_CHANNEL_REGISTER failed for Channel ID %d\n", channel_id);
+			return IPC_IOCTL_FAIL;
+		}
+		/* Store the received MSI Value */
+		ch->msi_value = efd_args.msi_value;
+		ch->msi_valid = 1;
+		PR("got MSI %d for Channel ID %d\n", efd_args.msi_value, channel_id);
+
+	} else {
+		ipc_priv->channels[channel_id]->eventfd = -1;
+		ch->msi_valid = 0;
+	}
 	ipc_mark_channel_as_configured(channel_id, ipc_priv->instance);
-	PR("%d %s\n \n \n",__LINE__, __func__);
 	PR("finish configure\n");
 	return IPC_SUCCESS;
 
 }
+
+int32_t ipc_get_eventfd(uint32_t channel_id, ipc_t instance)
+{
+	ipc_userspace_t *ipc_priv = (ipc_userspace_t *)instance;
+	return ipc_priv->channels[channel_id]->eventfd;
+}
+
 #if TBD
 /**************** Internal API ************************/
 #if 0 /*AK not needed */
@@ -1054,7 +1065,7 @@ static unsigned long __get_channel_paddr(uint32_t channel_id,
 	unsigned long		phys_addr;
 	ipc_instance_t *ipc = (ipc_instance_t *)ipc_priv->instance;
 	ipc_ch_t *ch = &(ipc->ch_list[channel_id]);
-	
+
 	if (!ipc || !(ipc->initialized))
 		return IPC_INSTANCE_INVALID;
 

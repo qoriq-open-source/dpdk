@@ -42,6 +42,7 @@
 #define IPC_IOCTL_FAIL			( -12 ) /** IOCTL call failed */
 #define IPC_MMAP_FAIL			( -14 ) /** MMAP fail */
 #define IPC_OPEN_FAIL			( -15 ) /** OPEN fail */
-#define IPC_NOT_IMPLEMENTED		( -16 )	/** IPC feature is not implemented yet */
+#define IPC_EVENTFD_FAIL		( -16 ) /** eventfd initalization failed */
+#define IPC_NOT_IMPLEMENTED		( -17 )	/** IPC feature is not implemented yet */
 
 #endif	/* __IPC_ERRCODES_H__ */
