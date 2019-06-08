@@ -808,7 +808,8 @@ repeat:
 		ret = validate_buffer((void *)validate_buf,
 				      buffer.data_size);
 		if (!buffer.data_size) {
-			ipc_debug("WARN: Received %d len in _recv_ptr\n", buffer.data_size);
+			printf("WARN: %s : Received %d len buffer\n",
+						__func__, buffer.data_size);
 		}
 		ipc_put_buf(channel_id, &buffer, instance);
 		if (ret) {
