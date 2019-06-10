@@ -263,19 +263,29 @@ struct gul_QDMA {
 	uint32_t no_callback_reg;
 } __attribute__((packed));
 
-struct gul_ipc_stats {
+struct gul_ipc_ch_stats {
 	uint32_t num_of_msg_recved;  /**< Total number of messages received */
 	uint32_t num_of_msg_sent;    /**< Total number of messages/ptr sent */
 	uint32_t total_msg_length;   /**< Total message length */
-	uint32_t error_count;        /**<  Error count */
+	uint32_t err_not_implemented;/**< Not implemented functionality count */
 	uint32_t err_input_invalid;
 	uint32_t err_channel_invalid;
-	uint32_t err_instance_invalid;
 	uint32_t err_mem_invalid;
 	uint32_t err_channel_full;
 	uint32_t err_channel_empty;
-	uint32_t err_buf_list_full;
 	uint32_t err_buf_list_empty;
+	uint32_t err_buf_list_full;
+	uint32_t err_host_buf_alloc_fail;
+	uint32_t err_ioctl_fail;
+	uint32_t err_efd_reg_fail;
+} __attribute__((packed));
+
+struct gul_ipc_stats {
+	uint32_t err_instance_invalid;
+	uint32_t err_md_sz_mismatch;
+	uint32_t err_mem_invalid;
+	uint32_t err_input_invalid;
+	struct gul_ipc_ch_stats ipc_ch_stats[NUM_IPC_CHANNELS];
 } __attribute__((packed));
 
 struct gul_stats {
@@ -294,7 +304,8 @@ struct gul_stats {
 	uint32_t eDMA_ch_allocated;
 	struct gul_QDMA gul_QDMA_ch[GUL_QDMA_CHANNELS];
 	uint32_t WDOG_interrupt;
-	struct gul_ipc_stats gul_ipc_ch[NUM_IPC_CHANNELS];
+	struct gul_ipc_stats m_ipc_stats;
+	struct gul_ipc_stats h_ipc_stats;
 } __attribute__((packed));
 
 struct hif_ipc_regs {

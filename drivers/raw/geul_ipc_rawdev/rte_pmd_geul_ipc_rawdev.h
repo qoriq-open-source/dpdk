@@ -44,8 +44,6 @@ typedef struct geulipc_channel {
 	int32_t eventfd;	/**< Event FD value */
 	enum ipc_ch_type type;  /**< Channel type */
 	struct rte_mempool *mp; /**< Pool from where buffers would be cut */
-	struct gul_ipc_stats *modem_stats; /**< Stats for modem (HIF) */
-	struct gul_ipc_stats host_stats; /**< Stats for host */
 } geulipc_channel_t;
 
 /* Configuration structure for Geul Device */
