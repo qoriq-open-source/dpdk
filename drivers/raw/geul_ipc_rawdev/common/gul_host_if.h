@@ -132,6 +132,7 @@ enum gul_msi_id {
 	MSI_IRQ_UNUSED_5,
 	MSI_IRQ_UNUSED_6,
 	MSI_IRQ_UNUSED_7,
+	MSI_IRQ_COUNT,
 };
 
 enum scratch_buf_request_id {
@@ -330,19 +331,19 @@ struct host_mem_region {
 
 #define GUL_HIF_MAJOR_VERSION		(0)
 #define GUL_HIF_MINOR_VERSION		(1)
-#define MSI_IRQ_COUNT 8
 
 struct hif_msi_regs {
 	uint32_t msi_addr_off_l;
 	uint32_t msi_addr_off_h;
 	uint32_t msi_val;
-}__attribute__((packed));
+} __attribute__((packed));
 
 struct gul_hif {
 	uint32_t ver;
 	uint32_t hif_ver;
 	uint32_t status;
 	uint32_t host_ready;
+	uint32_t la1575_host_ready;
 	uint32_t mod_ready;
 	struct host_mem_region host_regions[HOST_MEM_END];
 	struct irq_evt_regs irq_evt_regs;
