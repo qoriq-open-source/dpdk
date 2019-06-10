@@ -36,7 +36,6 @@ SRCS-$(CONFIG_RTE_LIBRTE_DPAA_BUS) += \
 	dpaa_bus.c
 
 SRCS-$(CONFIG_RTE_LIBRTE_DPAA_BUS) += \
-	base/fman/vsp.c \
 	base/fman/fman.c \
 	base/fman/fman_hw.c \
 	base/fman/of.c \

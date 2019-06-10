@@ -71,12 +71,12 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 	vsp_params.extBufPools.extBufPool[0].id = bp_info->bpid;
 	vsp_params.extBufPools.extBufPool[0].size = bp_info->size;
 
-	DPAA_BUS_DEBUG("Configured base profile: bpid %u size %u",
+	DPAA_PMD_DEBUG("Configured base profile: bpid %u size %u",
 		       bp_info->bpid, bp_info->size);
 
 	vsp[rel_idx][VSP_BASE] = FM_VSP_Config(&vsp_params);
 	if (!vsp[rel_idx][VSP_BASE]) {
-		DPAA_BUS_ERR("FM_VSP_Config");
+		DPAA_PMD_ERR("FM_VSP_Config");
 		return -EINVAL;
 	}
 
@@ -94,7 +94,7 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 	ret = FM_VSP_ConfigBufferPrefixContent(vsp[rel_idx][VSP_BASE],
 					       &buf_prefix_cont);
 	if (ret != E_OK) {
-		DPAA_BUS_ERR("FM_VSP_ConfigBufferPrefixContent error for vsp;"
+		DPAA_PMD_ERR("FM_VSP_ConfigBufferPrefixContent error for vsp;"
 			     " err: %d", ret);
 		return ret;
 	}
@@ -117,12 +117,12 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 		vsp_params.extBufPools.extBufPool[0].id = bp_base->bpid;
 		vsp_params.extBufPools.extBufPool[0].size = bp_base->size;
 
-		DPAA_BUS_DEBUG("Configured profile %d: bpid %u size %u",
+		DPAA_PMD_DEBUG("Configured profile %d: bpid %u size %u",
 			       i, bp_base->bpid, bp_base->size);
 
 		vsp[rel_idx][i] = FM_VSP_Config(&vsp_params);
 		if (!vsp[rel_idx][i]) {
-			DPAA_BUS_ERR("FM_VSP_Config error for profile %d", i);
+			DPAA_PMD_ERR("FM_VSP_Config error for profile %d", i);
 			return -EINVAL;
 		}
 
@@ -142,7 +142,7 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 		ret = FM_VSP_ConfigBufferPrefixContent(vsp[rel_idx][i],
 						       &buf_prefix_cont);
 		if (ret != E_OK) {
-			DPAA_BUS_ERR("FM_VSP_ConfigBufferPrefixContent error"
+			DPAA_PMD_ERR("FM_VSP_ConfigBufferPrefixContent error"
 				     "for profile %d err: %d", i, ret);
 			return ret;
 		}
@@ -151,7 +151,7 @@ int vsp_init(struct fman_if *fm, struct dpaa_bp_info *bp_base)
 
 		ret = FM_VSP_Init(vsp[rel_idx][i]);
 		if (ret != E_OK) {
-			DPAA_BUS_ERR("FM_VSP_Init error for profile %d err:%d",
+			DPAA_PMD_ERR("FM_VSP_Init error for profile %d err:%d",
 				     i, ret);
 			return ret;
 		}
@@ -180,14 +180,14 @@ int vsp_clean(void)
 			if (vsp[j][i]) {
 				ret = FM_VSP_Free(vsp[j][i]);
 				if (ret != E_OK) {
-					DPAA_BUS_ERR(
+					DPAA_PMD_ERR(
 						"Error FM_VSP_Free: "
 						"%d rel_id %d profile id %d",
 						ret, j, i);
 					return ret;
 				}
 				rte_mempool_free(vsp_mempool[j][i]);
-				DPAA_BUS_DEBUG("Cleaned storage profile:%d", i);
+				DPAA_PMD_DEBUG("Cleaned storage profile:%d", i);
 			}
 		}
 	}
