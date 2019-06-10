@@ -128,210 +128,266 @@ Executing GEUL IPC Applications
 
   $ mkdir -p /mnt/hugetlbfs;mount -t hugetlbfs none /mnt/hugetlbfs
 
-  $ ./geul_ipc_testapp -- -t <number of runs>
+  $ ./geul_ipc_testapp -- -t <number of runs>  [-e <Channel Mask for enable event mode>]
 
-  where <number of runs> is an integer counter which specified the number of
+  where,
+  <number of runs> is an integer counter which specified the number of
   buffer each channel would attempt to send or receive.
 
-  Following would be a sample output:
+  <Channel Mask for enable event mode> is a Hexadecimal Bit mask. Each bit from Right to Left
+  indicate a channel index starting from 0 to n-1. bit=0 wil put channel receiving in Poll Mode
+  while bit=1 will enable event mmode on that channel.
+  By default, all receiving channels are in Event mode.
 
-  --
-	=-=-=-=-=--=-==-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-
-		Print # : Non-RT Sender is waiting
-		Print . : RT Sender is waiting
-		Print * : Receiver is waiting
-	=-=-=-=-=--=-==-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-
-	--> Starting NON RT Sender (lcore_id=1)
-	--> Starting RT Sender (lcore_id=2)
-	--> Starting Receiver (lcore_id=3)
-	RT Priority set for Send on Core 2
-	---- For Channel L2_TO_L1_MSG_CH_1 ---
-	##### HOST Stats  ######
-	recvd =        0  sent =      100
-	total message length = 204800
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
 
-	##### MODEM Stats ######
-	recvd =      100  sent =        0
-	total message length = 204800
-	error: 24205
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 24234
-		buf_full: 0
-		buf_empty: 0
-	-------------------------
-	---- For Channel L2_TO_L1_MSG_CH_2 ---
-	##### HOST Stats  ######
-	recvd =        0  sent =      100
-	total message length = 204800
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
 
-	##### MODEM Stats ######
-	recvd =      100  sent =        0
-	total message length = 204800
-	error: 24320
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 24349
-		buf_full: 0
-		buf_empty: 0
-	-------------------------
-	---- For Channel L2_TO_L1_MSG_CH_3 ---
-	##### HOST Stats  ######
-	recvd =        0  sent =      100
-	total message length = 1638400
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
 
-	##### MODEM Stats ######
-	recvd =      100  sent =        0
-	total message length = 1638400
-	error: 24435
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 24464
-		buf_full: 0
-		buf_empty: 0
-	-------------------------
-	---- For Channel L1_TO_L2_MSG_CH_4 ---
-	##### HOST Stats  ######
-	recvd =      100  sent =        0
-	total message length = 204800
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
 
-	##### MODEM Stats ######
-	recvd =        0  sent =      101
-	total message length = 206848
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
-	-------------------------
-	---- For Channel L1_TO_L2_MSG_CH_5 ---
-	##### HOST Stats  ######
-	recvd =      100  sent =        0
-	total message length = 204800
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
+Following would be a sample output in application stats:
 
-	##### MODEM Stats ######
-	recvd =        0  sent =      101
-	total message length = 206848
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
-	-------------------------
-	---- For Channel L1_TO_L2_PRT_CH_1 ---
-	##### HOST Stats  ######
-	recvd =      100  sent =        0
-	total message length = 13107200
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-	       mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
+	#./geul_ipc_testapp -c 0xF -- -t 2
 
-	##### MODEM Stats ######
-	recvd =        0  sent =      100
-	total message length = 13107200
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
-	-------------------------
-	---- For Channel L1_TO_L2_PRT_CH_2 ---
-	##### HOST Stats  ######
-	recvd =        0  sent =        0
-	total message length = 0
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
-
-	##### MODEM Stats ######
-	recvd =        0  sent =        0
-	total message length = 0
-	error: 0
-		input_invalid: 0
-		channel_invalid: 0
-		instance_invalid: 0
-		mem_invalid: 0
-		channel_full: 0
-		channel_empty: 0
-		buf_full: 0
-		buf_empty: 0
-	-------------------------
 --
+
+=-=-=-=-=--=-==-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-
+	Print # : Non-RT Sender is waiting
+	Print . : RT Sender is waiting
+	Print * : Receiver is waiting
+=-=-=-=-=--=-==-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-
+ --> Starting NON RT Sender (lcore_id=1)
+ --> Starting RT Sender (lcore_id=2)
+ --> Starting Receiver (Poll Mode) (lcore_id=3)
+loop for _recv L1_TO_L2_MSG_CH_4
+Quiting NON RT Sender thread
+RT Priority set for Send on Core 2
+Quiting RT Sender thread
+loop for _recv L1_TO_L2_MSG_CH_5
+loop for _recv L1_TO_L2_PRT_CH_1
+loop for _recv L1_TO_L2_MSG_CH_4
+loop for _recv L1_TO_L2_MSG_CH_5
+loop for _recv L1_TO_L2_PRT_CH_1
+ --------- Quiting receiver Poll Mode
+ --> Starting Receiver (Event Mode) (lcore_id=3)
+ -------- Quiting receiver Event Mode
+##### HOST common stats  ######
+Invalid IPC Instance = 0
+IPC Metadata Size mismatch = 0
+##### MODEM common stats  ######
+Invalid IPC Instance = 0
+IPC Metadata Size mismatch = 0
+-------------------------------------------
+------- Per Channel Stats -----------------
+-------------------------------------------
+---- For Channel L2_TO_L1_MSG_CH_1 ---
+##### HOST Stats ######
+recvd =        0  sent =        2
+total_message_len = 4096
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+
+##### MODEM Stats ######
+recvd =        2  sent =        0
+total_message_len = 4096
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 8515
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+-------------------------
+---- For Channel L2_TO_L1_MSG_CH_2 ---
+##### HOST Stats ######
+recvd =        0  sent =        2
+total_message_len = 4096
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+
+##### MODEM Stats ######
+recvd =        2  sent =        0
+total_message_len = 4096
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 8705
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+-------------------------
+---- For Channel L2_TO_L1_MSG_CH_3 ---
+##### HOST Stats ######
+recvd =        0  sent =        2
+total_message_len = 32768
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+
+##### MODEM Stats ######
+recvd =        2  sent =        0
+total_message_len = 32768
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 8894
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+-------------------------
+---- For Channel L1_TO_L2_MSG_CH_4 ---
+##### HOST Stats ######
+recvd =        2  sent =        0
+total_message_len = 4096
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 1957
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+ eventfd_reg_failed: 0
+
+##### MODEM Stats ######
+recvd =        0  sent =        3
+total_message_len = 6144
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+-------------------------
+---- For Channel L1_TO_L2_MSG_CH_5 ---
+##### HOST Stats ######
+recvd =        2  sent =        0
+total_message_len = 4096
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+
+##### MODEM Stats ######
+recvd =        0  sent =        3
+total_message_len = 6144
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+-------------------------
+---- For Channel L1_TO_L2_PRT_CH_1 ---
+##### HOST Stats ######
+recvd =        2  sent =        0
+total_message_len = 262144
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 366
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+
+##### MODEM Stats ######
+recvd =        0  sent =        6
+total_message_len = 786432
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 3674
+ Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+-------------------------
+---- For Channel L1_TO_L2_PRT_CH_2 ---
+##### HOST Stats ######
+recvd =        0  sent =        0
+total_message_len = 0
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+
+##### MODEM Stats ######
+recvd =        0  sent =        0
+total_message_len = 0
+        input_invalid: 0
+        channel_invalid: 0
+        invalid_memory: 0
+        channel_full: 0
+        channel_empty: 0
+        buf_full: 0
+        buf_empty: 0
+        Buf_alloc_failed: 0
+        ioctl_failed: 0
+        eventfd_reg_failed: 0
+-------------------------
+
+--
+
+
+############## To check detailed IPC Lib host & Modem stats  ################
+----------------------------------------------
+# cat /sys/devices/platform/soc/3600000.pcie/pci0002\:00/0002\:00\:00.0/0002\:01\:00.0/0002\:02\:00.0/0002\:03\:00.0/gulsysfs/target_stats
+
+------- For Resetting Stats -----------
+# echo 0 > /sys/devices/platform/soc/3600000.pcie/pci0002\:00/0002\:00\:00.0/0002\:01\:00.0/0002\:02\:00.0/0002\:03\:00.0/gulsysfs/target_stats
