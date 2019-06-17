@@ -623,7 +623,7 @@ int ipc_recv_msg_ptr(uint32_t channel_id, void **dst_buffer,
 	UNUSED(pi);
 	UNUSED(ring_size);
 
-	if (!dst_buffer || !(*dst_buffer) || !len) {
+	if (!dst_buffer || !len) {
 		h_stats->ipc_ch_stats[channel_id].err_input_invalid++;
 		return IPC_INPUT_INVALID;
 	}
