@@ -85,6 +85,9 @@ static unsigned long get_channel_paddr(uint32_t channel_id,
 static unsigned long __get_channel_paddr(uint32_t channel_id,
 		ipc_userspace_t *ipc_priv);
 #endif
+
+static inline void ipc_memcpy(void *dst, void *src, uint32_t len);
+
 #if 0 /* NOT needed */
 static int get_ipc_inst(ipc_userspace_t *ipc_priv, uint32_t inst_id);
 static int get_channels_info(ipc_userspace_t *ipc, uint32_t instance_id);
@@ -362,6 +365,24 @@ int ipc_get_prod_buf_ptr(uint32_t channel_id, void **buf_ptr, ipc_t instance)
 	return IPC_NOT_IMPLEMENTED;
 }
 
+/* To handle glibc memcpy unaligned access issue, we need
+ * our own wrapper layer to handle corner cases. We use memcpy
+ * for size aligned bytes and do left opver byets copy manually.
+ */
+static inline void ipc_memcpy(void *dst, void *src, uint32_t len)
+{
+	uint32_t extra_b;
+
+	extra_b = (len & 0x7);
+	/* Adjust the length to multiple of 8 byte
+	 * and copy extra bytes to avoid BUS error
+	 */
+	if (extra_b)
+		len += (0x8 - extra_b);
+
+	memcpy(dst, src, len);
+}
+
 int ipc_send_msg(uint32_t channel_id,
 		void *src,
 		uint32_t len,
@@ -425,9 +446,8 @@ int ipc_send_msg(uint32_t channel_id,
 	bd = &bdr[pi];
 	//bd->host_virt = MODEM_P2V(bd->modem_ptr);
 	virt = MODEM_P2V(bd->modem_ptr);
-	memcpy((void *)(virt), src, len);
+	ipc_memcpy((void *)(virt), src, len);
 	bd->len = len;
-
 	pi = (pi + 1) % ring_size;
 
 	md->pi = pi;
@@ -589,8 +609,7 @@ int ipc_recv_msg(uint32_t channel_id, void *dst,
 	}
 	PR("%d %s\n\n",__LINE__, __func__);
 	vaddr2 = join_va2_64(bd->host_virt_h, bd->host_virt_l);
-	//memcpy(dst, (void *)(bd->host_virt), msg_len);
-	memcpy(dst, (void *)(vaddr2), msg_len);
+	ipc_memcpy(dst, (void *)(vaddr2), msg_len);
 	PR("%d %s\n\n",__LINE__, __func__);
 	*len = msg_len;
 
