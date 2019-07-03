@@ -1085,6 +1085,8 @@ main(int argc, char **argv)
 	if (ret < 0)
 		rte_panic("[%s] Cannot init EAL\n", argv[0]);
 
+	if (rte_lcore_count() < 4)
+		rte_panic("[%s] Cannot Run application as designed to run with minimium of 4 Cores\n", argv[0]);
 	argc -= ret;
 	argv += ret;
 
