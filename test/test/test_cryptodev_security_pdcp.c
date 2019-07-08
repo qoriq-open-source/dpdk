@@ -436,8 +436,8 @@ test_PDCP_PROTO_uplane_encap_all(void)
 
 	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, UPLINK, SNOW_ENC, NULL_AUTH));
 	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, DOWNLINK, SNOW_ENC, NULL_AUTH));
-//	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, UPLINK, SNOW_ENC, SNOW_AUTH));
-//	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, DOWNLINK, SNOW_ENC, SNOW_AUTH));
+	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, UPLINK, SNOW_ENC, SNOW_AUTH));
+	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, DOWNLINK, SNOW_ENC, SNOW_AUTH));
 	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, UPLINK, SNOW_ENC, AES_AUTH));
 	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, DOWNLINK, SNOW_ENC, AES_AUTH));
 	TEST_PDCP_COUNT(uplane_encap_with_integrity(18, UPLINK, SNOW_ENC, ZUC_AUTH));
@@ -557,8 +557,8 @@ test_PDCP_PROTO_uplane_decap_all(void)
 
 	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, UPLINK, SNOW_ENC, NULL_AUTH));
 	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, DOWNLINK, SNOW_ENC, NULL_AUTH));
-//	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, UPLINK, SNOW_ENC, SNOW_AUTH));
-//	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, DOWNLINK, SNOW_ENC, SNOW_AUTH));
+	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, UPLINK, SNOW_ENC, SNOW_AUTH));
+	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, DOWNLINK, SNOW_ENC, SNOW_AUTH));
 	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, UPLINK, SNOW_ENC, AES_AUTH));
 	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, DOWNLINK, SNOW_ENC, AES_AUTH));
 	TEST_PDCP_COUNT(uplane_decap_with_integrity(18, UPLINK, SNOW_ENC, ZUC_AUTH));
